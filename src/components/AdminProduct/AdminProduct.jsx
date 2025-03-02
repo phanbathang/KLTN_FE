@@ -46,6 +46,10 @@ const AdminProduct = () => {
         rating: '',
         newType: '',
         discount: '',
+        isForSale: true,
+        isForRent: true,
+        rentalPrice: '',
+        rentalDuration: '',
     });
 
     const [stateProductDetail, setStateProductDetail] = useState({
@@ -57,6 +61,10 @@ const AdminProduct = () => {
         countInStock: '',
         rating: '',
         discount: '',
+        isForSale: true,
+        isForRent: true,
+        rentalPrice: '',
+        rentalDuration: '',
     });
 
     const handleCancelDelete = () => {
@@ -88,20 +96,27 @@ const AdminProduct = () => {
             countInStock: '',
             rating: '',
             discount: '',
+            isForSale: true,
+            isForRent: true,
+            rentalPrice: '',
+            rentalDuration: '',
         });
-        setStateProductDetail({
-            name: '',
-            type: '',
-            price: '',
-            description: '',
-            image: '',
-            countInStock: '',
-            rating: '',
-        });
+        // setStateProductDetail({
+        //     name: '',
+        //     type: '',
+        //     price: '',
+        //     description: '',
+        //     image: '',
+        //     countInStock: '',
+        //     rating: '',
+        //     discount: '',
+        // });
         form.resetFields();
     };
 
     const [form] = Form.useForm();
+    const [formCreate] = Form.useForm();
+    const [formEdit] = Form.useForm();
 
     const mutation = useMutationHook((data) => {
         const {
@@ -113,6 +128,10 @@ const AdminProduct = () => {
             rating,
             countInStock,
             discount,
+            isForSale,
+            isForRent,
+            rentalPrice,
+            rentalDuration,
         } = data;
         const res = ProductService.createProduct({
             name,
@@ -123,6 +142,10 @@ const AdminProduct = () => {
             countInStock,
             rating,
             discount,
+            isForSale,
+            isForRent,
+            rentalPrice,
+            rentalDuration,
         });
         return res;
     });
@@ -156,9 +179,36 @@ const AdminProduct = () => {
                 countInStock: res?.data?.countInStock,
                 rating: res?.data?.rating,
                 discount: res?.data?.discount,
+                isForSale: res?.data?.isForSale,
+                isForRent: res?.data?.isForRent,
+                rentalPrice: res?.data?.rentalPrice,
+                rentalDuration: res?.data?.rentalDuration,
             });
         }
     };
+
+    useEffect(() => {
+        if (!isModalOpen) {
+            formEdit.setFieldsValue(stateProductDetail);
+        } else {
+            formCreate.setFieldsValue({
+                name: '',
+                type: '',
+                price: '',
+                description: '',
+                image: '',
+                countInStock: '',
+                rating: '',
+                discount: '',
+                isForSale: true,
+                isForRent: true,
+                rentalPrice: '',
+                rentalDuration: '',
+            });
+        }
+    }, [stateProductDetail, isModalOpen, formCreate, formEdit]);
+
+    console.log('state', stateProduct, stateProductDetail);
 
     useEffect(() => {
         form.setFieldsValue(stateProductDetail);
@@ -178,8 +228,11 @@ const AdminProduct = () => {
     };
 
     const closeDrawer = () => {
+        form.resetFields(); // Reset form về trạng thái ban đầu
+        setStateProductDetail({}); // Xóa hết dữ liệu sản phẩm trước đó
+
         setIsOpenDrawer(false);
-        handleCancel(); // Reset state khi đóng drawer
+        // handleCancel(); // Reset state khi đóng drawer
     };
 
     const handleDeleteProductMany = (ids) => {
@@ -345,15 +398,30 @@ const AdminProduct = () => {
         {
             title: 'Name',
             dataIndex: 'name',
-            width: 300,
+            width: 250,
+            align: 'center',
             sorter: (a, b) => a.name.length - b.name.length,
             ...getColumnSearchProps('name'),
         },
         {
+            title: 'Image',
+            dataIndex: 'image',
+            key: 'image',
+            align: 'center',
+            render: (imageUrl) => (
+                <img
+                    src={imageUrl}
+                    alt="Product"
+                    style={{ width: 100, height: 150, objectFit: 'cover' }}
+                />
+            ),
+        },
+        {
             title: 'Price',
             dataIndex: 'price',
-            width: 170,
+            width: 150,
             sorter: (a, b) => a.price - b.price,
+            align: 'center',
             filters: [
                 {
                     text: '>= 200',
@@ -372,10 +440,17 @@ const AdminProduct = () => {
             },
         },
         {
+            title: 'Discount(%)',
+            dataIndex: 'discount',
+            align: 'center',
+        },
+        {
             title: 'Rating',
             dataIndex: 'rating',
-            width: 170,
+            width: 120,
             sorter: (a, b) => a.rating - b.rating,
+            align: 'center',
+
             filters: [
                 {
                     text: '>= 3',
@@ -396,13 +471,22 @@ const AdminProduct = () => {
         {
             title: 'Type',
             dataIndex: 'type',
+            align: 'center',
+        },
+        {
+            title: 'CountInStock',
+            dataIndex: 'countInStock',
+            align: 'center',
+            sorter: (a, b) => a.countInStock - b.countInStock,
         },
         {
             title: 'Action',
             dataIndex: 'action',
+            align: 'center',
             render: renderAction,
         },
     ];
+
     const dataTable =
         products?.data.length &&
         products?.data.map((product) => {
@@ -410,6 +494,8 @@ const AdminProduct = () => {
                 ...product,
                 key: product._id,
                 price: convertPrice(product?.price),
+                isForSale: product.isForSale ? 'True' : 'False',
+                isForRent: product.isForRent ? 'True' : 'False',
             };
         });
 
@@ -481,6 +567,10 @@ const AdminProduct = () => {
             countInStock: stateProduct.countInStock,
             rating: stateProduct.rating,
             discount: stateProduct.discount,
+            isForSale: stateProduct.isForSale,
+            isForRent: stateProduct.isForRent,
+            rentalPrice: stateProduct.rentalPrice,
+            rentalDuration: stateProduct.rentalDuration,
         };
         mutation.mutate(params, {
             onSettled: () => {
@@ -488,6 +578,8 @@ const AdminProduct = () => {
             },
         });
     };
+
+    console.log('onFinish', onFinish);
 
     const handleOnchange = (e) => {
         setStateProduct({
@@ -571,7 +663,10 @@ const AdminProduct = () => {
                 <h1 className={styles.WrapperHeader}>Quản lý sản phẩm</h1>
                 <Button
                     className={styles.WrapperAddProduct}
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => {
+                        form.resetFields();
+                        setIsModalOpen(true);
+                    }}
                 >
                     {/* <PlusOutlined style={{ fontSize: '60px' }} /> */}
                     Thêm sản phẩm
@@ -611,7 +706,7 @@ const AdminProduct = () => {
                         initialValues={{ remember: true }}
                         onFinish={onFinish}
                         autoComplete="off"
-                        form={form}
+                        form={formCreate}
                     >
                         <Form.Item
                             label="Name"
@@ -748,10 +843,86 @@ const AdminProduct = () => {
                                 },
                             ]}
                         >
-                            <Input
+                            <Input.TextArea
                                 value={stateProduct.description}
                                 onChange={handleOnchange}
                                 name="description"
+                                className={styles.WrapperInput}
+                                style={{ height: '150px' }}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="isForSale"
+                            name="isForSale"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your isForSale!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProduct.isForSale}
+                                onChange={handleOnchange}
+                                name="isForSale"
+                                className={styles.WrapperInput}
+                                readOnly
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="isForRent"
+                            name="isForRent"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your isForRent!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProduct.isForRent}
+                                onChange={handleOnchange}
+                                name="isForRent"
+                                className={styles.WrapperInput}
+                                readOnly
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="rentalPrice"
+                            name="rentalPrice"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your rentalPrice!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProduct.rentalPrice}
+                                onChange={handleOnchange}
+                                name="rentalPrice"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="rentalDuration"
+                            name="rentalDuration"
+                            rules={[
+                                {
+                                    required: true,
+                                    message:
+                                        'Please input your rentalDuration!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProduct.rentalDuration}
+                                onChange={handleOnchange}
+                                name="rentalDuration"
                                 className={styles.WrapperInput}
                             />
                         </Form.Item>
@@ -794,7 +965,7 @@ const AdminProduct = () => {
                                 type="primary"
                                 htmlType="submit"
                                 style={{
-                                    left: '140%',
+                                    left: '84%',
                                     marginTop: '20px',
                                     padding: '25px 15px 25px 15px',
                                     backgroundColor: '#76b8bf',
@@ -808,7 +979,12 @@ const AdminProduct = () => {
                 <DrawerComponent
                     title="Chi tiết sản phẩm"
                     isOpen={isOpenDrawer}
-                    onClose={closeDrawer}
+                    // onClose={closeDrawer}
+                    onClose={() => {
+                        form.resetFields(); // Xóa dữ liệu khi nhấn Hủy
+                        setStateProductDetail({});
+                        setIsOpenDrawer(false);
+                    }}
                     width="50%"
                 >
                     <Form
@@ -817,13 +993,13 @@ const AdminProduct = () => {
                         wrapperCol={{ span: 16 }}
                         style={{
                             maxWidth: 600,
-                            marginTop: '30px',
+                            marginTop: '10px',
                             marginRight: '20%',
                         }}
                         initialValues={{ remember: true }}
                         onFinish={onUpdateProduct}
                         autoComplete="on"
-                        form={form}
+                        form={formEdit}
                     >
                         <Form.Item
                             label="Name"
@@ -957,6 +1133,81 @@ const AdminProduct = () => {
                                 name="description"
                                 className={styles.WrapperInput}
                                 style={{ height: '150px' }}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="isForSale"
+                            name="isForSale"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your isForSale!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProductDetail.isForSale}
+                                onChange={handleOnchangeDetail}
+                                name="isForSale"
+                                className={styles.WrapperInput}
+                                readOnly
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="isForRent"
+                            name="isForRent"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your isForRent!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProductDetail.isForRent}
+                                onChange={handleOnchangeDetail}
+                                name="isForRent"
+                                className={styles.WrapperInput}
+                                readOnly
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="rentalPrice"
+                            name="rentalPrice"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your rentalPrice!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProductDetail.rentalPrice}
+                                onChange={handleOnchangeDetail}
+                                name="rentalPrice"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="rentalDuration"
+                            name="rentalDuration"
+                            rules={[
+                                {
+                                    required: true,
+                                    message:
+                                        'Please input your rentalDuration!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateProductDetail.rentalDuration}
+                                onChange={handleOnchangeDetail}
+                                name="rentalDuration"
+                                className={styles.WrapperInput}
                             />
                         </Form.Item>
 

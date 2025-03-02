@@ -18,9 +18,11 @@ const TableComponent = (props) => {
     // rowSelection object indicates the need for row selection
 
     const newColumns = useMemo(() => {
-        const arr = columns?.filter((col) => col.dataIndex !== 'action');
+        const arr = columns?.filter(
+            (col) => col.dataIndex !== 'action' && col.dataIndex !== 'image',
+        );
         return arr;
-    });
+    }, [columns]);
     const rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {
             setRowSelectedKey(selectedRowKeys);

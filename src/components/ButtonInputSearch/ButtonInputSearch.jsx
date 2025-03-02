@@ -8,19 +8,20 @@ import ButtonComponents from '../ButtonComponents/ButtonComponents';
 const ButtonInputSearch = (props) => {
     const { size, placeholder, textButton, className } = props;
     return (
-        <div style={{ display: 'flex' }}>
+        <div
+            style={{
+                display: 'flex',
+                position: 'absolute',
+                left: '130px',
+                width: '100%',
+                top: '-20px',
+            }}
+        >
             <InputComponents
                 size={size}
                 placeholder={placeholder}
                 className={styles.wrapperInput}
                 {...props}
-            />
-
-            <ButtonComponents
-                size={size}
-                icon={<SearchOutlined />}
-                className={styles.wrapperButton}
-                textButton={textButton}
             />
         </div>
     );

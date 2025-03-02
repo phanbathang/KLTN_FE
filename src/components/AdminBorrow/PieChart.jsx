@@ -10,7 +10,7 @@ import {
 import { convertDataChart } from '../../ultils';
 
 const PieChartComponent = (props) => {
-    const data = convertDataChart(props.data, 'type');
+    const data = convertDataChart(props.data, 'paymentMethod');
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 

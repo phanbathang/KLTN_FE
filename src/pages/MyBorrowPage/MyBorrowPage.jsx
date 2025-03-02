@@ -1,32 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import * as OrderService from '../../services/OrderService.js';
+import * as BorrowService from '../../services/BorrowService.js';
 import { useSelector } from 'react-redux';
-import styles from './MyOrderPage.module.scss';
+import styles from './MyBorrowPage.module.scss';
 import { convertPrice } from '../../ultils.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutationHook } from '../../hooks/useMutationHook.js';
 import { Bounce, toast } from 'react-toastify';
 import { Modal } from 'antd'; // Thêm Modal của Ant Design
 
-const MyOrderPage = () => {
+const MyBorrowPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false); // Trạng thái hiển thị Modal
     const [selectedOrderId, setSelectedOrderId] = useState(null); // Lưu ID đơn hàng cần hủy
 
     const location = useLocation();
     const { state } = location;
+
     const navigate = useNavigate();
 
     const fetchMyOrder = async () => {
-        const res = await OrderService.getAllOrderDetail(
+        const res = await BorrowService.getAllBorrowDetail(
             state?.id,
             state?.access_token,
         );
         return res.data;
     };
 
+    useEffect(() => {
+        if (!state?.id || !state?.access_token) {
+            console.log('ID hoặc Access Token không hợp lệ');
+        } else {
+            console.log('ID và Access Token hợp lệ');
+        }
+    }, [state?.id, state?.access_token]);
+
     const queryOrder = useQuery({
-        queryKey: ['orders'],
+        queryKey: ['borrows'],
         queryFn: fetchMyOrder,
         enabled: !!state?.id && !!state?.access_token,
     });
@@ -52,10 +61,10 @@ const MyOrderPage = () => {
     //     });
     // };
 
-    const renderProduct = (orderItems) => {
+    const renderProduct = (borrowItems) => {
         return (
             <div className={styles.OrderDetailsGroup}>
-                {orderItems?.map((item, idx) => (
+                {borrowItems?.map((item, idx) => (
                     <div key={idx} className={styles.OrderDetails}>
                         <img
                             src={item.image}
@@ -73,7 +82,7 @@ const MyOrderPage = () => {
     };
 
     const handleDetailOrder = (id) => {
-        navigate(`/detailOrder/${id}`, {
+        navigate(`/detailBorrow/${id}`, {
             state: {
                 access_token: state?.access_token,
             },
@@ -82,7 +91,7 @@ const MyOrderPage = () => {
 
     const mutation = useMutationHook((data) => {
         const { id, access_token } = data;
-        return OrderService.cancelOrderDetail(id, access_token);
+        return BorrowService.returnBorrow(id, access_token);
     });
 
     const handleCancelOrder = (id) => {
@@ -122,56 +131,44 @@ const MyOrderPage = () => {
 
     return (
         <div className={styles.Wrapper}>
-            <h1>Đơn hàng của tôi</h1>
+            <h1>Danh sách sách đã mượn</h1>
             {(Array.isArray(data) ? data : [])
                 .slice()
                 .reverse()
-                .map((order) => (
-                    <div key={order.id} className={styles.OrderCard}>
+                .map((borrow) => (
+                    <div key={borrow.id} className={styles.OrderCard}>
                         <h2>Trạng thái</h2>
                         <div className={styles.OrderStatus}>
-                            <p>
-                                <span className={styles.StatusLabel}>
-                                    Giao hàng:
-                                </span>
-                                <span className={styles.StatusValue}>
-                                    {`${
-                                        order.isDelivered
-                                            ? 'Đã giao hàng'
-                                            : 'Chưa giao hàng'
-                                    }`}
-                                </span>
-                            </p>
                             <p>
                                 <span className={styles.StatusLabel}>
                                     Thanh toán:
                                 </span>
                                 <span className={styles.StatusValue}>
                                     {`${
-                                        order.isPaid
+                                        borrow.isPaid
                                             ? 'Đã thanh toán'
                                             : 'Chưa thanh toán'
                                     }`}
                                 </span>
                             </p>
                         </div>
-                        {renderProduct(order?.orderItems)}
+                        {renderProduct(borrow?.borrowItems)}
                         <div className={styles.OrderFooter}>
                             <p className={styles.OrderTotal}>
                                 Tổng tiền:{' '}
-                                <span>{convertPrice(order.totalPrice)}</span>
+                                <span>{convertPrice(borrow.totalPrice)}</span>
                             </p>
                             <div className={styles.OrderActions}>
                                 <button
                                     className={styles.CancelButton}
-                                    onClick={() => showCancelModal(order?._id)}
+                                    onClick={() => showCancelModal(borrow?._id)}
                                 >
-                                    Hủy đơn hàng
+                                    Trả đơn hàng
                                 </button>
                                 <button
                                     className={styles.DetailsButton}
                                     onClick={() =>
-                                        handleDetailOrder(order?._id)
+                                        handleDetailOrder(borrow?._id)
                                     }
                                 >
                                     Xem chi tiết
@@ -182,7 +179,7 @@ const MyOrderPage = () => {
                 ))}
             {/* Modal Xác nhận hủy */}
             <Modal
-                title="Xác nhận hủy đơn hàng"
+                title="Xác nhận trả đơn hàng"
                 visible={isModalVisible}
                 onOk={() => {
                     handleCancelOrder(selectedOrderId); // Hủy đơn hàng khi xác nhận
@@ -199,10 +196,10 @@ const MyOrderPage = () => {
                     },
                 }}
             >
-                <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+                <p>Bạn có chắc chắn muốn trả đơn hàng này không?</p>
             </Modal>
         </div>
     );
 };
 
-export default MyOrderPage;
+export default MyBorrowPage;

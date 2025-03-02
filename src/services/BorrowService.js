@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-export const getAllOrder = async (access_token) => {
+export const getAllBorrows = async (access_token) => {
     const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/order/getAllOrder`,
+        `${process.env.REACT_APP_API_URL}/borrow/getAllBorrows`,
         {
             headers: {
                 token: `Bearer ${access_token}`,
@@ -12,9 +12,9 @@ export const getAllOrder = async (access_token) => {
     return res.data;
 };
 
-export const createOrder = async (data, access_token) => {
+export const createBorrow = async (data, access_token) => {
     const res = await axios.post(
-        `${process.env.REACT_APP_API_URL}/order/createOrder`,
+        `${process.env.REACT_APP_API_URL}/borrow/createBorrow`,
         data,
         {
             headers: {
@@ -25,9 +25,9 @@ export const createOrder = async (data, access_token) => {
     return res.data;
 };
 
-export const getAllOrderDetail = async (id, access_token) => {
+export const getAllBorrowDetail = async (id, access_token) => {
     const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/order/getAllOrderDetail/${id}`,
+        `${process.env.REACT_APP_API_URL}/borrow/getAllBorrowDetail/${id}`,
         {
             headers: {
                 token: `Bearer ${access_token}`,
@@ -37,9 +37,9 @@ export const getAllOrderDetail = async (id, access_token) => {
     return res.data;
 };
 
-export const getOrderDetail = async (id, access_token) => {
+export const getBorrowDetail = async (id, access_token) => {
     const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/order/getOrderDetail/${id}`,
+        `${process.env.REACT_APP_API_URL}/borrow/getBorrowDetail/${id}`,
         {
             headers: {
                 token: `Bearer ${access_token}`,
@@ -49,9 +49,9 @@ export const getOrderDetail = async (id, access_token) => {
     return res.data;
 };
 
-export const cancelOrderDetail = async (id, access_token) => {
+export const returnBorrow = async (id, access_token) => {
     const res = await axios.delete(
-        `${process.env.REACT_APP_API_URL}/order/cancelOrderDetail/${id}`,
+        `${process.env.REACT_APP_API_URL}/borrow/returnBorrow/${id}`,
         {
             headers: {
                 token: `Bearer ${access_token}`,
@@ -61,9 +61,9 @@ export const cancelOrderDetail = async (id, access_token) => {
     return res.data;
 };
 
-export const getDeletedOrders = async (access_token) => {
+export const getDeletedBorrows = async (access_token) => {
     const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/order/getDeletedOrder`,
+        `${process.env.REACT_APP_API_URL}/borrow/getDeletedBorrows`,
         {
             headers: {
                 token: `Bearer ${access_token}`,

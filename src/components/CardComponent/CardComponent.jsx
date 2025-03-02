@@ -30,7 +30,7 @@ const CardComponent = (props) => {
             className={styles.WrapperCardStyle}
             hoverable
             headStyle={{ width: '200px', height: '200px' }}
-            bodyStyle={{ padding: '10px' }}
+            bodyStyle={{ padding: '20px 15px 15px 15px' }}
             cover={
                 <img
                     alt="example"
@@ -46,16 +46,18 @@ const CardComponent = (props) => {
             disabled={countInStock === 0}
         >
             <img className={styles.WrapperImg} src={logo} />
-            <div className={styles.StyleAuthorProduct}>NGUYỄN DU</div>
             <div className={styles.StyleNameProduct}>{name}</div>
             <div className={styles.WrapperReportText}>
                 <span style={{ marginRight: '4px' }}>
                     <span>{rating}</span>
                     <StarFilled
-                        style={{ fontSize: '12px', color: 'yellow ' }}
+                        style={{
+                            fontSize: '12px',
+                            color: 'yellow ',
+                        }}
                     />
                 </span>
-                <span> | {selled || 100}+</span>
+                <span> | Đã bán {selled || 100}+</span>
             </div>
             <div className={styles.WrapperPriceText}>
                 {convertPrice(price)}

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import styles from './AdminOrder.module.scss';
+import styles from './AdminDeletedOrder.module.scss';
 import { Button, Input, Modal, Space } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import TableComponent from '../TableComponent/TableComponent';
@@ -13,10 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
+import Loading from '../../components/LoadingComponent/Loading.jsx';
 
 dayjs.extend(isBetween);
 
-const AdminOrder = () => {
+const AdminDeletedOrder = () => {
     // const [selectedDate, setSelectedDate] = useState(null);
     const [selectedRange, setSelectedRange] = useState([null, null]);
 
@@ -24,14 +25,14 @@ const AdminOrder = () => {
     const user = useSelector((state) => state?.user);
     const access_token = user?.access_token;
 
-    const getAllOrder = async () => {
-        const res = await OrderService.getAllOrder(user?.access_token);
+    const getDeletedOrders = async () => {
+        const res = await OrderService.getDeletedOrders(user?.access_token);
         return res;
     };
 
     const queryOrder = useQuery({
         queryKey: ['orders'],
-        queryFn: OrderService.getAllOrder,
+        queryFn: OrderService.getDeletedOrders,
     });
 
     const { isLoading: isLoadingOrder, data: orders = { data: [] } } =
@@ -138,35 +139,11 @@ const AdminOrder = () => {
         },
 
         {
-            title: 'Paided',
-            dataIndex: 'isPaid',
-            width: 70,
-            sorter: (a, b) => a.isPaid.length - b.isPaid.length,
-            ...getColumnSearchProps('isPaid'),
-        },
-
-        {
-            title: 'Shipped',
-            dataIndex: 'isDelivered',
-            width: 70,
-            sorter: (a, b) => a.isDelivered.length - b.isDelivered.length,
-            ...getColumnSearchProps('isDelivered'),
-        },
-
-        {
-            title: 'Payment Method',
-            dataIndex: 'paymentMethod',
-            width: 300,
-            sorter: (a, b) => a.paymentMethod.length - b.paymentMethod.length,
-            ...getColumnSearchProps('paymentMethod'),
-        },
-
-        {
-            title: 'Ordered Date',
-            dataIndex: 'createdAt',
-            width: 300,
-            sorter: (a, b) => a.createdAt.length - b.createdAt.length,
-            ...getColumnSearchProps('createdAt'),
+            title: 'Canceled Date', // Thêm cột Ngày hủy
+            dataIndex: 'deletedAt',
+            width: 200,
+            sorter: (a, b) => a.deletedAt.length - b.deletedAt.length,
+            ...getColumnSearchProps('deletedAt'),
         },
 
         {
@@ -220,11 +197,10 @@ const AdminOrder = () => {
                 userName: order?.shippingAddress?.fullName,
                 phone: `0${order?.shippingAddress?.phone}`,
                 address: order?.shippingAddress?.address,
-                paymentMethod: orderContent.payment[order?.paymentMethod],
-                isPaid: order?.isPaid ? 'TRUE' : 'FALSE',
-                isDelivered: order?.isDelivered ? 'TRUE' : 'FALSE',
                 totalPrice: convertPrice(order?.totalPrice),
-                createdAt: formatDateTime(order?.createdAt),
+                deletedAt: order?.deletedAt
+                    ? formatDateTime(order?.deletedAt)
+                    : 'Chưa có thông tin',
             };
         });
 
@@ -240,11 +216,10 @@ const AdminOrder = () => {
                 userName: order?.shippingAddress?.fullName,
                 phone: `0${order?.shippingAddress?.phone}`,
                 address: order?.shippingAddress?.address,
-                paymentMethod: orderContent.payment[order?.paymentMethod],
-                isPaid: order?.isPaid ? 'TRUE' : 'FALSE',
-                isDelivered: order?.isDelivered ? 'TRUE' : 'FALSE',
                 totalPrice: convertPrice(order?.totalPrice),
-                createdAt: formatDateTime(order?.createdAt),
+                deletedAt: order?.deletedAt
+                    ? formatDateTime(order?.deletedAt)
+                    : 'Chưa có thông tin',
             };
         });
 
@@ -282,54 +257,57 @@ const AdminOrder = () => {
 
     return (
         <div>
-            <h1 className={styles.WrapperHeader}>Quản lý đơn hàng</h1>
+            <h1 className={styles.WrapperHeader}>Đơn hàng đã hủy</h1>
 
             <div
                 style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    marginTop: '30px',
                 }}
             >
-                <div style={{ height: '200px', width: '200px' }}>
-                    <PieChartComponent data={orders?.data} />
-                </div>
+                {/* <div style={{ height: '200px', width: '200px' }}>
+                        <PieChartComponent data={orders?.data} />
+                    </div> */}
 
                 {/* Hiển thị tổng tiền theo ngày đã chọn */}
-                <div className={styles.WrapperTotal}>
-                    <h2>
-                        Tổng doanh thu {selectedRange ? `` : 'tất cả các ngày'}:
-                    </h2>
-                    <p>
-                        <strong>
-                            {selectedRange[0] && selectedRange[1]
-                                ? `Từ ${selectedRange[0]} đến ${selectedRange[1]}`
-                                : 'Tất cả các ngày'}
-                            :
-                        </strong>{' '}
-                        <span style={{ color: 'red' }}>
-                            {selectedRange[0] && selectedRange[1]
-                                ? convertPrice(totalOrderByDateRange)
-                                : convertPrice(
-                                      orders?.data?.reduce(
-                                          (acc, order) =>
-                                              acc + order.totalPrice,
-                                          0,
-                                      ),
-                                  )}
-                        </span>
-                    </p>
-                </div>
+                {/* <div className={styles.WrapperTotal}>
+                        <h2>
+                            Tổng tiền đơn hàng đã hủy{' '}
+                            {selectedRange ? `` : 'tất cả các ngày'}:
+                        </h2>
+                        <p>
+                            <strong>
+                                {selectedRange[0] && selectedRange[1]
+                                    ? `Từ ${selectedRange[0]} đến ${selectedRange[1]}`
+                                    : 'Tất cả các ngày'}
+                                :
+                            </strong>{' '}
+                            <span style={{ color: 'red' }}>
+                                {selectedRange[0] && selectedRange[1]
+                                    ? convertPrice(totalOrderByDateRange)
+                                    : convertPrice(
+                                          orders?.data?.reduce(
+                                              (acc, order) =>
+                                                  acc + order.totalPrice,
+                                              0,
+                                          ),
+                                      )}
+                            </span>
+                        </p>
+                    </div> */}
 
                 {/* Chọn ngày */}
-                <div className={styles.WrapperDate}>
-                    <h2 style={{ marginRight: '5px' }}>Chọn ngày:</h2>
-                    <DatePicker.RangePicker
-                        onChange={handleDateChange}
-                        format="DD/MM/YYYY"
-                    />
-                </div>
+                {/* <div className={styles.WrapperDate}>
+                        <h2 style={{ marginRight: '5px' }}>Chọn ngày:</h2>
+                        <DatePicker.RangePicker
+                            onChange={handleDateChange}
+                            format="DD/MM/YYYY"
+                        />
+                    </div> */}
             </div>
+
             <div style={{ marginTop: '20px' }}>
                 <TableComponent
                     style={{ position: 'relative' }}
@@ -378,25 +356,13 @@ const AdminOrder = () => {
                             <strong>Địa chỉ:</strong> {selectedOrder.address}
                         </p>
                         <p style={{ marginBottom: '10px' }}>
-                            <strong>Phương thức thanh toán:</strong>{' '}
-                            {selectedOrder.paymentMethod}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Đã thanh toán:</strong>{' '}
-                            {selectedOrder.isPaid}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Đã giao hàng:</strong>{' '}
-                            {selectedOrder.isDelivered}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
                             <strong>Tổng tiền:</strong>{' '}
                             {selectedOrder.totalPrice}
                         </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Ngày đặt hàng:</strong>{' '}
-                            {selectedOrder.createdAt}
-                        </p>
+                        <p>
+                            <strong>Ngày hủy:</strong> {selectedOrder.deletedAt}
+                        </p>{' '}
+                        {/* Thêm ngày hủy */}
                     </div>
                 ) : (
                     <p>Đang tải dữ liệu...</p>
@@ -406,4 +372,4 @@ const AdminOrder = () => {
     );
 };
 
-export default AdminOrder;
+export default AdminDeletedOrder;

@@ -9,7 +9,7 @@ const TypeProduct = ({ name }) => {
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '')
                 ?.replace(/ /g, '_')}`,
-            { state: type },
+            { state: { selectedType: type } },
         );
     };
     return (

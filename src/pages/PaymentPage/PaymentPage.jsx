@@ -2,16 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Row, Col, Button, Form, Input, Radio } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { convertPrice } from '../../ultils.js';
-import ModalComponent from '../../components/ModalComponent/ModalComponent.jsx';
 import styles from './PaymentPage.module.scss';
 import { useMutationHook } from '../../hooks/useMutationHook.js';
 import * as UserService from '../../services/UserService.js';
 import * as OrderService from '../../services/OrderService.js';
 import * as PaymentService from '../../services/PaymentService.js';
-import { Bounce, toast } from 'react-toastify';
-import { updateUser } from '../../redux/slides/userSlide.js';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { removeAllOrderProduct } from '../../redux/slides/orderSlide.js';
 import { PayPalButton } from 'react-paypal-button-v2';
 import Loading from '../../components/LoadingComponent/Loading.jsx';
@@ -35,6 +32,9 @@ const PaymentPage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [form] = Form.useForm();
+    const location = useLocation();
+    const { priceMemo, priceDiscountMemo, priceDeliveryMemo, priceTotalMemo } =
+        location.state || {};
 
     useEffect(() => {
         form.setFieldsValue(stateUserDetail);
@@ -51,46 +51,6 @@ const PaymentPage = () => {
             });
         }
     }, [isOpenModalUpdateInfo]);
-
-    const handleChangeAddress = () => {
-        setIsOpenModalUpdateInfo(true);
-    };
-
-    const priceMemo = useMemo(() => {
-        const result = order?.orderItemSelected.reduce((total, cur) => {
-            return total + cur.price * cur.amount;
-        }, 0);
-        return result;
-    }, [order]);
-
-    const priceDiscountMemo = useMemo(() => {
-        const result = order?.orderItemSelected.reduce((total, cur) => {
-            const totalDiscount = cur.discount ? cur.discount : 0;
-            return total + (priceMemo * (totalDiscount * cur.amount)) / 100;
-        }, 0);
-        if (Number(result)) {
-            return result;
-        }
-        return 0;
-    }, [order]);
-
-    const priceDeliveryMemo = useMemo(() => {
-        if (priceMemo > 100000) {
-            return 10000;
-        } else if (priceMemo === 0) {
-            return 0;
-        } else {
-            return 20000;
-        }
-    }, [priceMemo]);
-
-    const priceTotalMemo = useMemo(() => {
-        return (
-            Number(priceMemo) -
-            Number(priceDiscountMemo) +
-            Number(priceDeliveryMemo)
-        );
-    }, [priceMemo, priceDiscountMemo, priceDeliveryMemo]);
 
     const handleAddOrder = () => {
         if (
@@ -127,21 +87,6 @@ const PaymentPage = () => {
         }
     };
 
-    const handleCancelUpdate = () => {
-        setStateUserDetail({
-            name: '',
-            email: '',
-            isAdmin: false,
-            phone: '',
-            // name: user?.name || '',
-            // phone: user?.phone || '',
-            // address: user?.address || '',
-            // city: user?.city || '',
-        });
-        form.resetFields();
-        setIsOpenModalUpdateInfo(false);
-    };
-
     const mutationUpdate = useMutationHook((data) => {
         const { id, access_token, ...rests } = data;
         return UserService.updateUser(id, rests, access_token);
@@ -157,6 +102,7 @@ const PaymentPage = () => {
 
     useEffect(() => {
         if (isSuccess && dataAdd?.status === 'OK') {
+            localStorage.removeItem('cart_' + user?.id);
             const arrayOrdered = [];
             order?.orderItemSelected?.forEach((e) => {
                 arrayOrdered.push(e.product);
@@ -179,37 +125,6 @@ const PaymentPage = () => {
             });
         }
     }, [isSuccess, isError]);
-
-    const queryUser = useQuery({
-        queryKey: ['users'],
-        queryFn: UserService.getAllUser,
-    });
-
-    const handleUpdateInfoUser = () => {
-        const { name, phone, address, city } = stateUserDetail;
-        if (name && address && phone && city) {
-            mutationUpdate.mutate(
-                {
-                    id: user?.id,
-                    ...stateUserDetail,
-                },
-                {
-                    onSuccess: () => {
-                        // queryUser.refetch();
-                        dispatch(updateUser({ name, phone, address, city }));
-                        setIsOpenModalUpdateInfo(false);
-                    },
-                },
-            );
-        }
-    };
-
-    const handleOnchangeDetail = (e) => {
-        setStateUserDetail({
-            ...stateUserDetail,
-            [e.target.name]: e.target.value,
-        });
-    };
 
     const handleDelivery = (e) => {
         setDelivery(e.target.value);
@@ -255,7 +170,7 @@ const PaymentPage = () => {
                 totalPrice: priceTotalMemo,
                 user: user?.id,
                 isPaid: true,
-                paidAt: details.updata_time,
+                paidAt: details.update_time,
                 email: user?.email,
             },
             {
@@ -400,24 +315,13 @@ const PaymentPage = () => {
                             }}
                         >
                             <Row style={{ marginBottom: '25px' }}>
-                                <span>Địa chỉ:</span>
+                                <span>Địa chỉ giao hàng:</span>
                                 <span
                                     style={{
-                                        marginLeft: '5px',
                                         fontWeight: 'bold',
                                     }}
                                 >
                                     {`${user?.address} ${user?.city}`}{' '}
-                                </span>
-                                <span
-                                    style={{
-                                        marginLeft: '5px',
-                                        cursor: 'pointer',
-                                        color: 'blue',
-                                    }}
-                                    onClick={handleChangeAddress}
-                                >
-                                    Thay đổi
                                 </span>
                             </Row>
                             <Row
@@ -477,7 +381,7 @@ const PaymentPage = () => {
                                         borderColor: '#ff4d4f',
                                         height: '40px',
                                     }}
-                                    onClick={handleAddOrder}
+                                    onClick={() => handleAddOrder()}
                                 >
                                     Đặt hàng
                                 </Button>
@@ -485,124 +389,6 @@ const PaymentPage = () => {
                         </div>
                     </Col>
                 </Row>
-
-                <ModalComponent
-                    title="Cập nhật thông tin giao hàng"
-                    open={isOpenModalUpdateInfo}
-                    onCancel={handleCancelUpdate}
-                    style={{ top: '50px' }}
-                    onOk={handleUpdateInfoUser}
-                    footer={[
-                        <Button
-                            key="cancel"
-                            onClick={handleCancelUpdate}
-                            style={{
-                                borderColor: '#76b8bf',
-                                color: '#000',
-                            }}
-                        >
-                            Hủy
-                        </Button>,
-                        <Button
-                            key="submit"
-                            type="primary"
-                            style={{
-                                backgroundColor: '#76b8bf', // Màu nền của nút OK
-                                borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
-                            }}
-                            onClick={handleUpdateInfoUser} // Hàm xử lý khi nhấn nút OK
-                        >
-                            OK
-                        </Button>,
-                    ]}
-                >
-                    <Form
-                        name="basic"
-                        labelCol={{ span: 6 }}
-                        wrapperCol={{ span: 16 }}
-                        style={{
-                            maxWidth: 600,
-                            marginTop: '30px',
-                            marginRight: '20%',
-                        }}
-                        initialValues={{ remember: true }}
-                        // onFinish={onUpdateUser}
-                        autoComplete="on"
-                        form={form}
-                    >
-                        <Form.Item
-                            label="Name"
-                            name="name"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your name!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateUserDetail.name}
-                                onChange={handleOnchangeDetail}
-                                name="name"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Phone"
-                            name="phone"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your phone!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateUserDetail.phone}
-                                onChange={handleOnchangeDetail}
-                                name="phone"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Address"
-                            name="address"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your address!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateUserDetail.address}
-                                onChange={handleOnchangeDetail}
-                                name="address"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="City"
-                            name="city"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your city!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateUserDetail.city}
-                                onChange={handleOnchangeDetail}
-                                name="city"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                    </Form>
-                </ModalComponent>
             </div>
         </Loading>
     );

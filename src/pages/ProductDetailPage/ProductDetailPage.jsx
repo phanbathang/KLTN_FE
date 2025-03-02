@@ -11,10 +11,10 @@ const ProductDetailPage = () => {
             style={{
                 padding: '5px 120px 0 120px',
                 backgroundColor: '#efefef',
-                height: '1000px',
+                height: 'auto',
             }}
         >
-            <h2 style={{ padding: '10px 0 12px 0' }}>
+            {/* <h2 style={{ padding: '10px 0 12px 0' }}>
                 <span
                     onClick={() => {
                         navigate('/');
@@ -24,7 +24,7 @@ const ProductDetailPage = () => {
                     Trang chủ
                 </span>{' '}
                 - Chi tiết sản phẩm
-            </h2>
+            </h2> */}
             <ProductDetailComponent idProduct={id} />
         </div>
     );

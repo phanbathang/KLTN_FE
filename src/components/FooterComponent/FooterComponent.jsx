@@ -69,13 +69,18 @@ const FooterComponent = () => {
                     Mọi thắc mắc và góp ý cần hỗ trợ xin vui lòng liên hệ
                     Fanpage
                 </p>
-                <a href="" alt="">
-                    <FacebookOutlined
-                        style={{
-                            fontSize: '40px',
-                            marginTop: '10px',
-                            color: 'blue',
-                        }}
+                <a
+                    href="https://www.facebook.com/phan.ba.thang.111582/"
+                    target="_blank"
+                    style={{
+                        marginTop: '20px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/b/b9/2023_Facebook_icon.svg"
+                        style={{ width: '50px', marginRight: '-5px' }}
                     />
                 </a>
             </div>

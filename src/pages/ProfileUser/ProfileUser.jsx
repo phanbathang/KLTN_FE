@@ -22,9 +22,10 @@ const ProfileUser = () => {
     const [address, setAddress] = useState('');
     const [avatar, setAvatar] = useState('');
 
-    const mutation = useMutationHook((data) => {
+    const mutation = useMutationHook(async (data) => {
         const { id, access_token, ...rests } = data;
-        UserService.updateUser(id, rests, access_token);
+        const res = await UserService.updateUser(id, rests, access_token);
+        return res;
     });
     const { data, isSuccess, isError, error } = mutation;
 
@@ -39,13 +40,11 @@ const ProfileUser = () => {
     useEffect(() => {
         if (isSuccess || data?.status === 'OK') {
             setIsSubmitting(true);
-            setTimeout(() => {
-                setIsSubmitting(false);
-                toast.success('Cập nhật hồ sơ thành công', {
-                    style: { fontSize: '1.5rem' },
-                });
-                mutation.reset();
-            }, 2000);
+            setIsSubmitting(false);
+            toast.success('Cập nhật hồ sơ thành công', {
+                style: { fontSize: '1.5rem' },
+            });
+            mutation.reset();
             handleGetDetailUser(user?.id, user?.access_token);
         } else if (isError || data?.status === 'ERR') {
             const errorMessage =

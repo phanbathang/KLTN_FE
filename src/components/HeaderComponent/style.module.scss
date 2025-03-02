@@ -6,18 +6,20 @@
 }
 
 .WrappperHeaderLink {
-    // Thêm CSS cho link nếu cần
+    width: 110px;
 }
 
 .WrappperHeaderImg {
     height: 80px;
+    cursor: pointer;
 }
 
-.WrrapperHeaderAccount {
+.WrapperHeaderAccount {
     display: flex;
     align-items: center; // Cần sửa đúng là align-items thay vì align-item
     color: #fff;
     gap: 10px;
+    margin-left: 20px;
 }
 
 .WrappperHeaderText {
@@ -53,5 +55,119 @@
     padding: 10px 0 5px 0;
     &:hover {
         opacity: 0.5;
+    }
+}
+
+.WrapperHome {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 5px;
+    margin-right: 20px;
+    cursor: pointer;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0; // Ban đầu ẩn đi
+        height: 2px;
+        background-color: #fff; // Màu gạch dưới
+        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
+    }
+
+    &:hover::after {
+        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
+    }
+}
+
+.WrapperCategory {
+    color: #fff;
+    margin: auto;
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+    font-size: 18px;
+    font-weight: 600;
+    position: relative; // Cần để sử dụng ::after
+    text-decoration: none; // Loại bỏ gạch chân mặc định
+    padding-bottom: 5px;
+    margin-right: 20px;
+    cursor: pointer;
+
+    &:hover {
+        color: #fff !important;
+        background-color: transparent !important;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0; // Ban đầu ẩn đi
+        height: 2px;
+        background-color: #fff; // Màu gạch dưới
+        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
+    }
+
+    &:hover::after {
+        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
+    }
+}
+
+.WrapperMyOrder {
+    color: #fff;
+    width: 146px;
+    font-size: 18px;
+    font-weight: 600;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 5px;
+    cursor: pointer;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0; // Ban đầu ẩn đi
+        height: 2px;
+        background-color: #fff; // Màu gạch dưới
+        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
+    }
+
+    &:hover::after {
+        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
+    }
+}
+
+.WrapperCart {
+    color: #fff;
+    position: relative;
+    text-decoration: none;
+    margin-left: 15px;
+    padding-bottom: 5px;
+    cursor: pointer;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0; // Ban đầu ẩn đi
+        height: 2px;
+        background-color: #fff; // Màu gạch dưới
+        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
+    }
+
+    &:hover::after {
+        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
     }
 }

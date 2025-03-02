@@ -36,3 +36,13 @@ body {
 div#paypal-button-container {
     display: block !important;
 }
+
+:where(.css-dev-only-do-not-override-1htoz2s).ant-menu-light
+    .ant-menu-submenu-selected
+    > .ant-menu-submenu-title,
+:where(.css-dev-only-do-not-override-1htoz2s).ant-menu-light
+    > .ant-menu
+    .ant-menu-submenu-selected
+    > .ant-menu-submenu-title {
+    color: #000 !important;
+}

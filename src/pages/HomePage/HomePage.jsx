@@ -19,7 +19,7 @@ const HomePage = () => {
     const searchProduct = useSelector((state) => state.product?.search);
     const searchDebounce = useDebounceHook(searchProduct, 1000);
     const [isSetLoading, setIsSetLoading] = useState(false);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(15);
     const [typeProduct, setTypeProduct] = useState([]);
     const fetchProductAll = async (context) => {
         const limit = context?.queryKey && context?.queryKey[1];
@@ -65,15 +65,15 @@ const HomePage = () => {
         <Loading isLoading={isLoading || isSetLoading}>
             <div
                 style={{
-                    padding: '0px 120px 30px 120px',
+                    padding: '20px 120px 30px 120px',
                     backgroundColor: '#f0f0f0',
                 }}
             >
-                <div className={styles.wrapperTypeProduct}>
+                {/* <div className={styles.wrapperTypeProduct}>
                     {typeProduct.map((item) => {
                         return <TypeProduct name={item} key={item} />;
                     })}
-                </div>
+                </div> */}
 
                 <SliderComponents arrImage={[slide4, slide7, slide6]} />
                 <div className={styles.WrapperProducts}>

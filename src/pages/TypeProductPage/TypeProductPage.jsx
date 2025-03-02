@@ -6,6 +6,7 @@ import * as ProductService from '../../services/ProductService';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useDebounceHook } from '../../hooks/useDebounce';
+import styles from './TypeProductPage.module.scss';
 
 const TypeProductPage = () => {
     const searchProduct = useSelector((state) => state.product?.search);
@@ -16,21 +17,28 @@ const TypeProductPage = () => {
         const res = await ProductService.getTypeProduct(type);
         if (res?.status === 'OK') {
             setProducts(res?.data);
-        } else {
         }
     };
 
     useEffect(() => {
-        if (state) {
-            fetchProductType(state);
+        if (state?.selectedType) {
+            fetchProductType(state.selectedType);
         }
     }, [state]);
+
+    const selectedType = state?.selectedType || 'Tất cả sản phẩm';
+
     const onChange = () => {};
     return (
-        <div style={{ backgroundColor: '#efefef' }}>
-            <Row style={{ padding: '30px 170px', backgroundColor: '#efefef' }}>
+        <div style={{ backgroundColor: '#efefef', height: '100vh' }}>
+            <Row
+                style={{
+                    padding: '30px 136px',
+                    backgroundColor: '#efefef',
+                }}
+            >
                 <Col span={4}>
-                    <NavBarComponent />
+                    <div className={styles.WrapperNavbar}>{selectedType}</div>
                 </Col>
 
                 <Col
@@ -40,6 +48,7 @@ const TypeProductPage = () => {
                         backgroundColor: '#efefef',
                         display: 'flex',
                         gap: '21px',
+                        flexWrap: 'wrap',
                     }}
                 >
                     {products

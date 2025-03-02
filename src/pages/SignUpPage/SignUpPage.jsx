@@ -141,7 +141,7 @@ const SignUpPage = () => {
                     >
                         Đăng nhập bằng email
                     </div>
-                    <div
+                    {/* <div
                         style={{
                             paddingTop: '20px',
                             fontSize: '1.5rem',
@@ -166,7 +166,7 @@ const SignUpPage = () => {
                             src="https://cdn.pixabay.com/photo/2021/05/24/09/15/google-logo-6278331_960_720.png"
                             style={{ width: '35px' }}
                         />
-                    </div>
+                    </div> */}
                 </div>
                 <div className={styles.WrapperLoginRight}>
                     <Image

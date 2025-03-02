@@ -41,6 +41,14 @@ export const orderSlide = createSlice({
             state.isSuccessOrder = false;
         },
 
+        setOrderItems: (state, action) => {
+            state.orderItems = action.payload; // Cập nhật giỏ hàng từ localStorage
+        },
+
+        resetOrderItem: (state) => {
+            state.orderItems = [];
+        },
+
         increaseAmount: (state, action) => {
             const { idProduct } = action.payload;
             const itemOrder = state?.orderItems?.find(
@@ -110,6 +118,8 @@ export const {
     removeAllOrderProduct,
     selectedOrder,
     resetOrder,
+    resetOrderItem,
+    setOrderItems,
 } = orderSlide.actions;
 
 export default orderSlide.reducer;

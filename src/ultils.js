@@ -56,27 +56,40 @@ export const convertPrice = (price) => {
     }
 };
 
-export const convertDataChart = (data, type) => {
-    try {
-        const object = {};
-        Array.isArray(data) &&
-            data.forEach((option) => {
-                if (!object[option[type]]) {
-                    object[option[type]] = 1;
-                } else {
-                    object[option[type]] += 1;
+export const convertDataChart = (orders) => {
+    if (!Array.isArray(orders) || orders.length === 0) {
+        return [];
+    }
+
+    const typeCounts = {};
+
+    // Lặp qua từng đơn hàng
+    orders.forEach((order) => {
+        if (Array.isArray(order.orderItems)) {
+            order.orderItems.forEach((item) => {
+                if (item?.type) {
+                    typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
                 }
             });
-        const result =
-            Array.isArray(Object.keys(object)) &&
-            Object.keys(object).map((item) => {
-                return {
-                    name: orderContent.payment[item],
-                    value: object[item],
-                };
-            });
-        return result;
+        }
+    });
+
+    // Chuyển đối tượng thành mảng để hiển thị trên biểu đồ
+    return Object.entries(typeCounts).map(([type, value]) => ({
+        name: type, // Loại sách
+        value: value, // Số lượng xuất hiện
+    }));
+};
+
+export const convertDate = (dateString) => {
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
     } catch (error) {
-        return [];
+        return null;
     }
 };
