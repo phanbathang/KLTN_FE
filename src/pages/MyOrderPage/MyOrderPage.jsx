@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as OrderService from '../../services/OrderService.js';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './MyOrderPage.module.scss';
 import { convertPrice } from '../../ultils.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutationHook } from '../../hooks/useMutationHook.js';
-import { Bounce, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { Modal } from 'antd'; // Thêm Modal của Ant Design
+import * as PaymentService from '../../services/PaymentService.js';
+import { clearCaptureId } from '../../redux/slides/paymentSlide.js';
 
 const MyOrderPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false); // Trạng thái hiển thị Modal
@@ -15,6 +17,8 @@ const MyOrderPage = () => {
 
     const location = useLocation();
     const { state } = location;
+    const dispatch = useDispatch();
+    const captureIdFromRedux = useSelector((state) => state.payment.captureId);
     const navigate = useNavigate();
 
     const fetchMyOrder = async () => {
@@ -33,24 +37,6 @@ const MyOrderPage = () => {
 
     const { isLoading, data } = queryOrder;
     console.log('123', isLoading, data); // Kiểm tra trạng thái và dữ liệu nhận được
-
-    // const renderProduct = (data) => {
-    //     return data?.map((order) => {
-    //         return (
-    //             <div className={styles.OrderDetails}>
-    //                 <img
-    //                     src={order.image}
-    //                     alt={order.name}
-    //                     className={styles.OrderImage}
-    //                 />
-    //                 <div className={styles.OrderInfo}>
-    //                     <p>{order.name}</p>
-    //                     <p>{convertPrice(order.price)}</p>
-    //                 </div>
-    //             </div>
-    //         );
-    //     });
-    // };
 
     const renderProduct = (orderItems) => {
         return (
@@ -85,44 +71,146 @@ const MyOrderPage = () => {
         return OrderService.cancelOrderDetail(id, access_token);
     });
 
-    const handleCancelOrder = (id) => {
-        mutation.mutate(
-            { id, access_token: state?.access_token },
-            {
-                onSuccess: () => {
-                    queryOrder.refetch(); // Tải lại danh sách đơn hàng sau khi hủy
-                },
-            },
-        );
-    };
+    // const handleCancelOrder = (id) => {
+    //     mutation.mutate(
+    //         { id, access_token: state?.access_token },
+    //         {
+    //             onSuccess: () => {
+    //                 queryOrder.refetch(); // Tải lại danh sách đơn hàng sau khi hủy
+    //             },
+    //         },
+    //     );
+    // };
 
-    const {
-        isLoading: isLoadingCancel,
-        isSuccess: isSuccessCancel,
-        isError: isErrorCancel,
-        data: dataCancel,
-    } = mutation;
+    const handleCancelOrder = async (
+        id,
+        captureId,
+        paymentMethod,
+        isPaid,
+        isDelivered,
+    ) => {
+        try {
+            const finalCaptureId = captureIdFromRedux; // Ưu tiên lấy từ Redux nếu có
 
-    useEffect(() => {
-        if (isSuccessCancel && dataCancel?.status === 'OK') {
-            toast.success('Hủy đơn hàng thành công.', {
-                style: { fontSize: '1.5rem' },
-            });
-        } else if (isErrorCancel || dataCancel?.status === 'ERR') {
-            toast.error('Hủy đơn hàng không thành công.', {
+            if (isDelivered) {
+                toast.warning(
+                    'Đơn hàng đã giao, cần xác nhận trước khi hoàn tiền.',
+                    {
+                        style: { fontSize: '1.5rem' },
+                    },
+                );
+                return;
+            }
+
+            let refundSuccess = true;
+
+            if (refundSuccess) {
+                mutation.mutate(
+                    { id, access_token: state?.access_token },
+                    {
+                        onSuccess: () => {
+                            queryOrder.refetch();
+                            toast.success('Hủy đơn hàng thành công.', {
+                                style: { fontSize: '1.5rem' },
+                            });
+                        },
+                        onError: () => {
+                            toast.error('Hủy đơn hàng thất bại.', {
+                                style: { fontSize: '1.5rem' },
+                            });
+                        },
+                    },
+                );
+            }
+
+            if (finalCaptureId && isPaid) {
+                const accessToken = await PaymentService.getAccessTokenPaypal();
+                console.log('Access Token nhận được:', accessToken);
+                const refundResponse = await PaymentService.refundOrder(
+                    finalCaptureId,
+                    accessToken,
+                );
+                console.log('Kết quả hoàn tiền:', refundResponse);
+
+                if (refundResponse.status !== 'OK') {
+                    toast.success('Hoàn tiền PayPal thành công!', {
+                        style: { fontSize: '1.5rem' },
+                    });
+                    refundSuccess = false;
+                    // Xóa captureId sau khi hoàn tiền thành công
+                    dispatch(clearCaptureId());
+                } else {
+                    toast.error('Hoàn tiền PayPal thất bại!', {
+                        style: { fontSize: '1.5rem' },
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi khi hoàn tiền:', error);
+            toast.error('Có lỗi xảy ra khi hoàn tiền.', {
                 style: { fontSize: '1.5rem' },
             });
         }
-    }, [isSuccessCancel, isErrorCancel]);
+    };
 
-    const showCancelModal = (id) => {
-        setSelectedOrderId(id); // Lưu ID của đơn hàng
-        setIsModalVisible(true); // Hiển thị Modal
+    // const {
+    //     isLoading: isLoadingCancel,
+    //     isSuccess: isSuccessCancel,
+    //     isError: isErrorCancel,
+    //     data: dataCancel,
+    // } = mutation;
+
+    // useEffect(() => {
+    //     if (isSuccessCancel && dataCancel?.status === 'OK') {
+    //         toast.success('Hủy đơn hàng thành công.', {
+    //             style: { fontSize: '1.5rem' },
+    //         });
+    //     } else if (isErrorCancel || dataCancel?.status === 'ERR') {
+    //         toast.error('Hủy đơn hàng không thành công.', {
+    //             style: { fontSize: '1.5rem' },
+    //         });
+    //     }
+    // }, [isSuccessCancel, isErrorCancel]);
+
+    // const showCancelModal = (id) => {
+    //     setSelectedOrderId(id); // Lưu ID của đơn hàng
+    //     setIsModalVisible(true); // Hiển thị Modal
+    // };
+
+    const showCancelModal = (
+        id,
+        captureId,
+        paymentMethod,
+        isPaid,
+        isDelivered,
+    ) => {
+        setSelectedOrderId({
+            id,
+            captureId: captureId || captureIdFromRedux,
+            paymentMethod,
+            isPaid,
+            isDelivered,
+        });
+        setIsModalVisible(true);
     };
 
     return (
         <div className={styles.Wrapper}>
             <h1>Đơn hàng của tôi</h1>
+            {Array.isArray(data) && data.length === 0 && (
+                <div
+                    style={{
+                        textAlign: 'center',
+                        padding: '20px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        color: '#ff4d4f',
+                    }}
+                >
+                    Không có đơn hàng nào được tìm thấy. Hãy kiểm tra lại hoặc
+                    bắt đầu mua sắm!
+                </div>
+            )}
             {(Array.isArray(data) ? data : [])
                 .slice()
                 .reverse()
@@ -164,7 +252,15 @@ const MyOrderPage = () => {
                             <div className={styles.OrderActions}>
                                 <button
                                     className={styles.CancelButton}
-                                    onClick={() => showCancelModal(order?._id)}
+                                    onClick={() =>
+                                        showCancelModal(
+                                            order?._id,
+                                            order?.captureIdFromRedux,
+                                            order?.paymentMethod,
+                                            order?.isPaid,
+                                            order?.isDelivered,
+                                        )
+                                    }
                                 >
                                     Hủy đơn hàng
                                 </button>
@@ -185,7 +281,13 @@ const MyOrderPage = () => {
                 title="Xác nhận hủy đơn hàng"
                 visible={isModalVisible}
                 onOk={() => {
-                    handleCancelOrder(selectedOrderId); // Hủy đơn hàng khi xác nhận
+                    handleCancelOrder(
+                        selectedOrderId.id,
+                        selectedOrderId.captureIdFromRedux,
+                        selectedOrderId.paymentMethod,
+                        selectedOrderId.isPaid,
+                        selectedOrderId.isDelivered,
+                    );
                     setIsModalVisible(false); // Đóng Modal
                 }}
                 onCancel={() => setIsModalVisible(false)} // Đóng Modal khi người dùng hủy

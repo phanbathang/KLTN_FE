@@ -8,14 +8,15 @@ import {
     removeAllOrderProduct,
     removeOrderProduct,
     selectedOrder,
+    setOrderItems,
 } from '../../redux/slides/orderSlide';
 import { convertPrice } from '../../ultils';
-import styles from './OrderPage.module.scss';
 import { useMutationHook } from '../../hooks/useMutationHook';
 import * as UserService from '../../services/UserService.js';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import StepsComponent from '../../components/StepsComponent/StepsComponent.jsx';
+import { persistor } from '../../redux/store';
 
 const OrderPage = () => {
     const [listChecked, setListChecked] = useState([]);
@@ -28,11 +29,22 @@ const OrderPage = () => {
         name: '',
         phone: '',
         address: '',
-        city: '',
     });
 
     const navigate = useNavigate();
     const [form] = Form.useForm();
+
+    // Đồng bộ giỏ hàng từ localStorage khi khởi động
+    useEffect(() => {
+        if (user?.id) {
+            const savedCart = cartStorage.load(user.id);
+            if (savedCart && Array.isArray(savedCart)) {
+                console.log('Restoring cart from localStorage:', savedCart);
+                dispatch(setOrderItems(savedCart));
+                persistor.flush(); // Ép lưu vào persist:root
+            }
+        }
+    }, [user?.id]);
 
     const onChange = (e) => {
         if (listChecked.includes(e.target.value)) {
@@ -46,19 +58,65 @@ const OrderPage = () => {
     };
 
     const handleChangeCount = (type, idProduct, limited) => {
-        if (type === 'increase') {
-            if (!limited) {
-                dispatch(increaseAmount({ idProduct }));
+        const updatedItems = order.orderItems.map((item) => {
+            if (item.product === idProduct) {
+                const newAmount =
+                    type === 'increase'
+                        ? limited
+                            ? item.amount
+                            : item.amount + 1
+                        : limited
+                        ? item.amount
+                        : item.amount - 1;
+                return { ...item, amount: newAmount };
             }
-        } else {
-            if (!limited) {
-                dispatch(decreaseAmount({ idProduct }));
-            }
+            return item;
+        });
+
+        if (type === 'increase' && !limited) {
+            dispatch(increaseAmount({ idProduct }));
+        } else if (type === 'decrease' && !limited) {
+            dispatch(decreaseAmount({ idProduct }));
         }
+
+        if (user?.id) {
+            cartStorage.save(user.id, updatedItems);
+            persistor.flush();
+        }
+    };
+
+    const cartStorage = {
+        save: (userId, cartItems) => {
+            localStorage.setItem(`cart_${userId}`, JSON.stringify(cartItems));
+        },
+        load: (userId) => {
+            const data = localStorage.getItem(`cart_${userId}`);
+            return data ? JSON.parse(data) : null;
+        },
     };
 
     const handleDeleteOrder = (idProduct) => {
         dispatch(removeOrderProduct({ idProduct }));
+        if (user?.id) {
+            const newCart = order.orderItems.filter(
+                (item) => item.product !== idProduct,
+            );
+            cartStorage.save(user.id, newCart);
+            persistor.flush();
+        }
+    };
+
+    const handleRemoveAllOrder = () => {
+        if (listChecked?.length > 0) {
+            dispatch(removeAllOrderProduct({ listChecked }));
+            if (user?.id) {
+                const newCart = order.orderItems.filter(
+                    (item) => !listChecked.includes(item.product),
+                );
+                cartStorage.save(user.id, newCart);
+                persistor.flush();
+            }
+        }
     };
 
     const handleOnchangeCheckAll = (e) => {
@@ -85,19 +143,12 @@ const OrderPage = () => {
         if (isOpenModalUpdateInfo) {
             setStateUserDetail({
                 ...stateUserDetail,
-                city: user?.city,
                 name: user?.name,
                 phone: user?.phone,
                 address: user?.address,
             });
         }
     }, [isOpenModalUpdateInfo]);
-
-    const handleRemoveAllOrder = () => {
-        if (listChecked?.length > 0) {
-            dispatch(removeAllOrderProduct({ listChecked }));
-        }
-    };
 
     const priceMemo = useMemo(() => {
         const result = order?.orderItemSelected.reduce((total, cur) => {
@@ -147,12 +198,7 @@ const OrderPage = () => {
             toast.error('Vui lòng chọn sản phẩm để thanh toán', {
                 style: { fontSize: '1.5rem' },
             });
-        } else if (
-            !user?.phone ||
-            !user?.address ||
-            !user?.name ||
-            !user?.city
-        ) {
+        } else if (!user?.phone || !user?.address || !user?.name) {
             setIsOpenModalUpdateInfo(true);
         } else {
             navigate('/payment', {
@@ -199,8 +245,6 @@ const OrderPage = () => {
         >
             <h1 style={{ marginBottom: '10px' }}>Giỏ hàng</h1>
             <Row gutter={16}>
-                {/* Phần bên trái: Danh sách sản phẩm */}
-
                 <Col span={18}>
                     <div
                         style={{
@@ -221,7 +265,6 @@ const OrderPage = () => {
                                     : 3
                             }
                         />
-                        {/* Header */}
                         <Row
                             style={{
                                 borderBottom: '1px solid #ddd',
@@ -252,7 +295,6 @@ const OrderPage = () => {
                             >
                                 Tên sản phẩm
                             </Col>
-
                             <Col
                                 span={4}
                                 style={{
@@ -282,7 +324,6 @@ const OrderPage = () => {
                             >
                                 Thành tiền
                             </Col>
-
                             <Button
                                 type="text"
                                 icon={<DeleteOutlined />}
@@ -292,7 +333,20 @@ const OrderPage = () => {
                             />
                         </Row>
 
-                        {/* Sản phẩm */}
+                        {order?.orderItems?.length === 0 && (
+                            <div
+                                style={{
+                                    textAlign: 'center',
+                                    padding: '20px',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    color: '#ff4d4f',
+                                }}
+                            >
+                                Chưa có sách nào trong giỏ
+                            </div>
+                        )}
+
                         {order?.orderItems?.map((order) => {
                             return (
                                 <Row
@@ -420,7 +474,6 @@ const OrderPage = () => {
                     </div>
                 </Col>
 
-                {/* Phần bên phải: Tóm tắt đơn hàng */}
                 <Col span={6}>
                     <div
                         style={{
@@ -436,7 +489,7 @@ const OrderPage = () => {
                                     fontWeight: 'bold',
                                 }}
                             >
-                                {`${user?.address} ${user?.city}`}{' '}
+                                {`${user?.address}`}
                             </span>
                         </Row>
                         <Row

@@ -19,7 +19,8 @@ import {
     MoreOutlined,
     PlusOutlined,
     SwapOutlined,
-    SwapRightOutlined,
+    HeartFilled,
+    HeartOutlined,
 } from '@ant-design/icons';
 import ButtonComponents from '../ButtonComponents/ButtonComponents';
 import * as ProductService from '../../services/ProductService.js';
@@ -30,12 +31,17 @@ import { addOrderProduct, resetOrder } from '../../redux/slides/orderSlide.js';
 import { convertPrice, formatDescription } from '../../ultils.js';
 import { toast } from 'react-toastify';
 import { addBorrowProduct } from '../../redux/slides/borrowSlide.js';
+import {
+    addToWishlist,
+    removeFromWishlist,
+} from '../../redux/slides/productSlide.js';
 
 const { TextArea } = Input;
 
 const ProductDetailComponent = ({ idProduct }) => {
     const user = useSelector((state) => state.user);
     const order = useSelector((state) => state.order);
+    const wishlist = useSelector((state) => state.product.wishlist);
     const [errorOrderLimit, setErrorOrderLimit] = useState(false);
     const [numProduct, setNumProduct] = useState(1);
     const [comment, setComment] = useState('');
@@ -43,6 +49,7 @@ const ProductDetailComponent = ({ idProduct }) => {
     const [showComments, setShowComments] = useState(false);
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editedComment, setEditedComment] = useState('');
+    const [borrowDuration, setBorrowDuration] = useState(1); // Thêm state cho số ngày mượn
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
@@ -166,15 +173,9 @@ const ProductDetailComponent = ({ idProduct }) => {
         if (!user?.id) {
             navigate('/sign-in', { state: location.pathname });
         } else {
-            const borrowDate = new Date().toISOString().split('T')[0]; // Ngày mượn: hôm nay
-            const returnDate = productDetails?.rentalDuration
-                ? new Date(
-                      Date.now() +
-                          productDetails.rentalDuration * 24 * 60 * 60 * 1000,
-                  )
-                      .toISOString()
-                      .split('T')[0]
-                : null; // Ngày trả (nếu có rentalDuration)
+            const borrowDate = new Date();
+            const returnDate = new Date(borrowDate);
+            returnDate.setDate(borrowDate.getDate() + borrowDuration);
 
             dispatch(
                 addBorrowProduct({
@@ -183,15 +184,20 @@ const ProductDetailComponent = ({ idProduct }) => {
                         amount: numProduct || 1,
                         image: productDetails?.image || '',
                         price: productDetails?.rentalPrice || 0,
-                        product: productDetails?._id, // 🔥 Kiểm tra ID sản phẩm
+                        product: productDetails?._id,
                         discount: productDetails?.discount || 0,
                         countInStock: productDetails?.countInStock || 0,
                         isRenting: true,
-                        borrowDate,
-                        returnDate,
+                        borrowDate: borrowDate.toISOString().split('T')[0],
+                        returnDate: returnDate.toISOString().split('T')[0],
+                        borrowDuration, // Thêm số ngày mượn
                     },
                 }),
             );
+
+            toast.success('Thành công thêm vào giỏ sách', {
+                style: { fontSize: '15px' },
+            });
         }
     };
 
@@ -199,28 +205,24 @@ const ProductDetailComponent = ({ idProduct }) => {
         if (!user?.id) {
             navigate('/sign-in', { state: location.pathname });
         } else {
-            const borrowDate = new Date().toISOString().split('T')[0];
-            const returnDate = productDetails?.rentalDuration
-                ? new Date(
-                      Date.now() +
-                          productDetails.rentalDuration * 24 * 60 * 60 * 1000,
-                  )
-                      .toISOString()
-                      .split('T')[0]
-                : null;
+            const borrowDate = new Date();
+            const returnDate = new Date(borrowDate);
+            returnDate.setDate(borrowDate.getDate() + borrowDuration);
+
             dispatch(
                 addBorrowProduct({
                     borrowItem: {
                         name: productDetails?.name,
                         amount: numProduct,
                         image: productDetails?.image,
-                        price: productDetails?.rentalPrice, // Giá thuê
+                        price: productDetails?.rentalPrice,
                         product: productDetails?._id,
                         discount: productDetails?.discount,
                         countInStock: productDetails?.countInStock,
-                        isRenting: true, // Đánh dấu là sản phẩm thuê
-                        borrowDate, // Thêm ngày mượn
-                        returnDate, // Thêm ngày trả
+                        isRenting: true,
+                        borrowDate: borrowDate.toISOString().split('T')[0],
+                        returnDate: returnDate.toISOString().split('T')[0],
+                        borrowDuration, // Thêm số ngày mượn
                     },
                 }),
             );
@@ -235,26 +237,56 @@ const ProductDetailComponent = ({ idProduct }) => {
         return `${day}-${month}-${year}`;
     };
 
-    const rentalDays = productDetails?.rentalDuration ? (
-        <>
-            {formatDate(new Date())}{' '}
-            <SwapOutlined
-                style={{
-                    fontSize: '13px',
-                    marginLeft: '3px',
-                    marginRight: '5px',
-                }}
-            />
-            {formatDate(
-                new Date(
-                    Date.now() +
-                        productDetails.rentalDuration * 24 * 60 * 60 * 1000,
-                ),
-            )}
-        </>
-    ) : (
-        'Không xác định'
+    const rentalDays = borrowDuration
+        ? `${formatDate(new Date())} - ${formatDate(
+              new Date(Date.now() + borrowDuration * 24 * 60 * 60 * 1000),
+          )}`
+        : 'Không xác định';
+
+    const isWishlisted = wishlist.some(
+        (item) => item.id === productDetails?._id,
     );
+
+    const handleAddWishListProduct = () => {
+        if (!user?.id) {
+            navigate('/sign-in', { state: location.pathname });
+        } else {
+            if (isWishlisted) {
+                dispatch(removeFromWishlist(productDetails?._id));
+                toast.warning('Đã xóa khỏi danh sách yêu thích', {
+                    style: { fontSize: '15px' },
+                });
+                console.log('Removed from wishlist:', productDetails?._id);
+            } else {
+                if (wishlist.length >= 10) {
+                    toast.error(
+                        'Danh sách yêu thích đã đầy (tối đa 10 sản phẩm)',
+                        {
+                            style: { fontSize: '15px' },
+                        },
+                    );
+                    return;
+                }
+                const productToAdd = {
+                    wishlist: {
+                        id: productDetails?._id,
+                        name: productDetails?.name,
+                        amount: numProduct,
+                        image: productDetails?.image,
+                        price: productDetails?.price,
+                        type: productDetails?.type,
+                        discount: productDetails?.discount,
+                        countInStock: productDetails?.countInStock,
+                    },
+                };
+                dispatch(addToWishlist(productToAdd));
+                toast.success('Đã thêm vào danh sách yêu thích', {
+                    style: { fontSize: '15px' },
+                });
+                console.log('Added to wishlist:', productToAdd);
+            }
+        }
+    };
 
     useEffect(() => {
         if (order.isSuccessOrder) {
@@ -469,15 +501,17 @@ const ProductDetailComponent = ({ idProduct }) => {
                                 </span>
                             </div>
 
-                            <div className={styles.WrapperAddressProduct}>
-                                <span>Giao đến </span>
-                                <span
-                                    className="address"
-                                    style={{ fontWeight: 'bold' }}
-                                >
-                                    {user?.address}
-                                </span>
-                            </div>
+                            {!isForRent && (
+                                <div className={styles.WrapperAddressProduct}>
+                                    <span>Giao đến </span>
+                                    <span
+                                        className="address"
+                                        style={{ fontWeight: 'bold' }}
+                                    >
+                                        {user?.address}
+                                    </span>
+                                </div>
+                            )}
                             <div className={styles.WrapperQualityProduct}>
                                 <div style={{ marginBottom: '15px' }}>
                                     {' '}
@@ -518,6 +552,37 @@ const ProductDetailComponent = ({ idProduct }) => {
                                     </button>
                                 </div>
                             </div>
+
+                            {!isForSale && (
+                                <div className={styles.WrapperQualityProduct}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        Thời gian mượn (ngày)
+                                    </div>
+                                    <InputNumber
+                                        min={1}
+                                        max={30}
+                                        defaultValue={1}
+                                        value={borrowDuration}
+                                        onChange={(value) =>
+                                            setBorrowDuration(Number(value))
+                                        }
+                                        style={{ width: '100px' }}
+                                    />
+                                </div>
+                            )}
+
+                            <div
+                                className={styles.WrapperWishlist}
+                                onClick={handleAddWishListProduct}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {isWishlisted ? (
+                                    <HeartFilled style={{ color: 'red' }} />
+                                ) : (
+                                    <HeartOutlined />
+                                )}
+                            </div>
+
                             {errorOrderLimit && (
                                 <div style={{ color: 'red' }}>
                                     Sản phẩm đã hết hàng

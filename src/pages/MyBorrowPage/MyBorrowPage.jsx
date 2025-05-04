@@ -1,3 +1,4 @@
+// MyBorrowPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as BorrowService from '../../services/BorrowService.js';
@@ -7,15 +8,14 @@ import { convertPrice } from '../../ultils.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutationHook } from '../../hooks/useMutationHook.js';
 import { Bounce, toast } from 'react-toastify';
-import { Modal } from 'antd'; // Thêm Modal của Ant Design
+import { Modal } from 'antd';
 
 const MyBorrowPage = () => {
-    const [isModalVisible, setIsModalVisible] = useState(false); // Trạng thái hiển thị Modal
-    const [selectedOrderId, setSelectedOrderId] = useState(null); // Lưu ID đơn hàng cần hủy
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null); // Lưu thông tin sản phẩm cần trả
 
     const location = useLocation();
     const { state } = location;
-
     const navigate = useNavigate();
 
     const fetchMyOrder = async () => {
@@ -26,14 +26,6 @@ const MyBorrowPage = () => {
         return res.data;
     };
 
-    useEffect(() => {
-        if (!state?.id || !state?.access_token) {
-            console.log('ID hoặc Access Token không hợp lệ');
-        } else {
-            console.log('ID và Access Token hợp lệ');
-        }
-    }, [state?.id, state?.access_token]);
-
     const queryOrder = useQuery({
         queryKey: ['borrows'],
         queryFn: fetchMyOrder,
@@ -41,27 +33,8 @@ const MyBorrowPage = () => {
     });
 
     const { isLoading, data } = queryOrder;
-    console.log('123', isLoading, data); // Kiểm tra trạng thái và dữ liệu nhận được
 
-    // const renderProduct = (data) => {
-    //     return data?.map((order) => {
-    //         return (
-    //             <div className={styles.OrderDetails}>
-    //                 <img
-    //                     src={order.image}
-    //                     alt={order.name}
-    //                     className={styles.OrderImage}
-    //                 />
-    //                 <div className={styles.OrderInfo}>
-    //                     <p>{order.name}</p>
-    //                     <p>{convertPrice(order.price)}</p>
-    //                 </div>
-    //             </div>
-    //         );
-    //     });
-    // };
-
-    const renderProduct = (borrowItems) => {
+    const renderProduct = (borrowItems, borrowId) => {
         return (
             <div className={styles.OrderDetailsGroup}>
                 {borrowItems?.map((item, idx) => (
@@ -74,6 +47,20 @@ const MyBorrowPage = () => {
                         <div className={styles.OrderInfo}>
                             <p style={{ fontWeight: 'bold' }}>{item.name}</p>
                             <p>{convertPrice(item.price)}</p>
+                            <p>
+                                Trạng thái:{' '}
+                                {item.isReturned ? 'Đã trả' : 'Chưa trả'}
+                            </p>
+                            {!item.isReturned && (
+                                <button
+                                    className={styles.CancelButton}
+                                    onClick={() =>
+                                        showCancelModal(borrowId, item._id)
+                                    }
+                                >
+                                    Trả sản phẩm
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -81,25 +68,17 @@ const MyBorrowPage = () => {
         );
     };
 
-    const handleDetailOrder = (id) => {
-        navigate(`/detailBorrow/${id}`, {
-            state: {
-                access_token: state?.access_token,
-            },
-        });
-    };
-
     const mutation = useMutationHook((data) => {
-        const { id, access_token } = data;
-        return BorrowService.returnBorrow(id, access_token);
+        const { borrowId, itemId, access_token } = data;
+        return BorrowService.returnBorrowItem(borrowId, itemId, access_token);
     });
 
-    const handleCancelOrder = (id) => {
+    const handleCancelItem = (borrowId, itemId) => {
         mutation.mutate(
-            { id, access_token: state?.access_token },
+            { borrowId, itemId, access_token: state?.access_token },
             {
                 onSuccess: () => {
-                    queryOrder.refetch(); // Tải lại danh sách đơn hàng sau khi hủy
+                    queryOrder.refetch();
                 },
             },
         );
@@ -114,29 +93,54 @@ const MyBorrowPage = () => {
 
     useEffect(() => {
         if (isSuccessCancel && dataCancel?.status === 'OK') {
-            toast.success('Hủy đơn hàng thành công.', {
+            toast.success('Trả sản phẩm thành công.', {
                 style: { fontSize: '1.5rem' },
             });
         } else if (isErrorCancel || dataCancel?.status === 'ERR') {
-            toast.error('Hủy đơn hàng không thành công.', {
-                style: { fontSize: '1.5rem' },
-            });
+            toast.error(
+                dataCancel?.message || 'Trả sản phẩm không thành công.',
+                {
+                    style: { fontSize: '1.5rem' },
+                },
+            );
         }
-    }, [isSuccessCancel, isErrorCancel]);
+    }, [isSuccessCancel, isErrorCancel, dataCancel]);
 
-    const showCancelModal = (id) => {
-        setSelectedOrderId(id); // Lưu ID của đơn hàng
-        setIsModalVisible(true); // Hiển thị Modal
+    const showCancelModal = (borrowId, itemId) => {
+        setSelectedItem({ borrowId, itemId });
+        setIsModalVisible(true);
+    };
+
+    const handleDetailOrder = (id) => {
+        navigate(`/detailBorrow/${id}`, {
+            state: {
+                access_token: state?.access_token,
+            },
+        });
     };
 
     return (
         <div className={styles.Wrapper}>
-            <h1>Danh sách sách đã mượn</h1>
+            <h1>Danh sách sách đã thuê</h1>
+            {Array.isArray(data) && data.length === 0 && (
+                <div
+                    style={{
+                        textAlign: 'center',
+                        padding: '20px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        color: '#ff4d4f',
+                    }}
+                >
+                    Không có sách nào trong danh sách mượn. Thêm sách vào ngay
+                    để không bỏ lỡ!
+                </div>
+            )}
             {(Array.isArray(data) ? data : [])
                 .slice()
                 .reverse()
                 .map((borrow) => (
-                    <div key={borrow.id} className={styles.OrderCard}>
+                    <div key={borrow._id} className={styles.OrderCard}>
                         <h2>Trạng thái</h2>
                         <div className={styles.OrderStatus}>
                             <p>
@@ -151,8 +155,18 @@ const MyBorrowPage = () => {
                                     }`}
                                 </span>
                             </p>
+                            <p>
+                                <span className={styles.StatusLabel}>
+                                    Trả hàng:
+                                </span>
+                                <span className={styles.StatusValue}>
+                                    {borrow.isFullyReturned
+                                        ? 'Đã trả hết'
+                                        : 'Chưa trả hết'}
+                                </span>
+                            </p>
                         </div>
-                        {renderProduct(borrow?.borrowItems)}
+                        {renderProduct(borrow?.borrowItems, borrow._id)}
                         <div className={styles.OrderFooter}>
                             <p className={styles.OrderTotal}>
                                 Tổng tiền:{' '}
@@ -160,15 +174,9 @@ const MyBorrowPage = () => {
                             </p>
                             <div className={styles.OrderActions}>
                                 <button
-                                    className={styles.CancelButton}
-                                    onClick={() => showCancelModal(borrow?._id)}
-                                >
-                                    Trả đơn hàng
-                                </button>
-                                <button
                                     className={styles.DetailsButton}
                                     onClick={() =>
-                                        handleDetailOrder(borrow?._id)
+                                        handleDetailOrder(borrow._id)
                                     }
                                 >
                                     Xem chi tiết
@@ -177,15 +185,17 @@ const MyBorrowPage = () => {
                         </div>
                     </div>
                 ))}
-            {/* Modal Xác nhận hủy */}
             <Modal
-                title="Xác nhận trả đơn hàng"
+                title="Xác nhận trả sản phẩm"
                 visible={isModalVisible}
                 onOk={() => {
-                    handleCancelOrder(selectedOrderId); // Hủy đơn hàng khi xác nhận
-                    setIsModalVisible(false); // Đóng Modal
+                    handleCancelItem(
+                        selectedItem?.borrowId,
+                        selectedItem?.itemId,
+                    );
+                    setIsModalVisible(false);
                 }}
-                onCancel={() => setIsModalVisible(false)} // Đóng Modal khi người dùng hủy
+                onCancel={() => setIsModalVisible(false)}
                 okText="Xác nhận"
                 cancelText="Hủy bỏ"
                 okButtonProps={{
@@ -196,7 +206,7 @@ const MyBorrowPage = () => {
                     },
                 }}
             >
-                <p>Bạn có chắc chắn muốn trả đơn hàng này không?</p>
+                <p>Bạn có chắc chắn muốn trả sản phẩm này không?</p>
             </Modal>
         </div>
     );

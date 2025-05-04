@@ -7,21 +7,15 @@ import {
     SearchOutlined,
 } from '@ant-design/icons';
 import TableComponent from '../TableComponent/TableComponent';
-import {
-    convertPrice,
-    getBase64,
-    renderOptions,
-    renderOptionsUpdate,
-} from '../../ultils';
-import * as UserService from '../../services/UserService.js';
+import { convertPrice, renderOptions, renderOptionsUpdate } from '../../ultils';
 import * as ProductService from '../../services/ProductService.js';
 import { useMutationHook } from '../../hooks/useMutationHook.js';
-import { Bounce, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { useQuery } from '@tanstack/react-query';
 import DrawerComponent from '../DrawerComponent/DrawerComponent.jsx';
-import { useDispatch, useSelector } from 'react-redux';
-import { updateUser } from '../../redux/slides/userSlide.js';
+import { useSelector } from 'react-redux';
 import ModalComponent from '../ModalComponent/ModalComponent.jsx';
+import Loading from '../LoadingComponent/Loading.jsx';
 
 const AdminProduct = () => {
     // const dispatch = useDispatch();
@@ -34,6 +28,7 @@ const AdminProduct = () => {
     const [searchText, setSearchText] = useState('');
     const [searchedColumn, setSearchedColumn] = useState('');
     const [typeSelect, setTypeSelect] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
     const searchInput = useRef(null);
 
     const [stateProduct, setStateProduct] = useState({
@@ -281,7 +276,11 @@ const AdminProduct = () => {
         queryFn: ProductService.getAllTypeProduct,
     });
 
-    const { isLoading: isLoadingProduct, data: products } = queryProduct;
+    const {
+        isLoading: isLoadingProduct,
+        isFetching,
+        data: products,
+    } = queryProduct;
 
     const renderAction = () => {
         return (
@@ -483,6 +482,7 @@ const AdminProduct = () => {
             title: 'Action',
             dataIndex: 'action',
             align: 'center',
+            width: 120,
             render: renderAction,
         },
     ];
@@ -611,23 +611,66 @@ const AdminProduct = () => {
     const handleOnchangeAvatar = async ({ fileList }) => {
         const file = fileList[0];
         if (!file.url && !file.preview) {
-            file.preview = await getBase64(file.originFileObj);
+            try {
+                // Tạo FormData để gửi file lên server
+                const formData = new FormData();
+                formData.append('file', file.originFileObj);
+                formData.append('upload_preset', 'xvfxjxgm'); // Thay bằng upload preset của bạn
+
+                // Gọi API upload lên Cloudinary
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/dk6phxjab/image/upload`,
+                    {
+                        method: 'POST',
+                        body: formData,
+                    },
+                );
+
+                const data = await response.json();
+                if (data.secure_url) {
+                    setStateProduct({
+                        ...stateProduct,
+                        image: data.secure_url, // Lưu URL từ Cloudinary
+                    });
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                toast.error('Upload ảnh thất bại');
+            }
         }
-        setStateProduct({
-            ...stateProduct,
-            image: file.preview,
-        });
     };
 
     const handleOnchangeAvatarDetail = async ({ fileList }) => {
+        if (isUploading) return; // Chặn nếu đang upload
+
         const file = fileList[0];
-        if (!file.url && !file.preview) {
-            file.preview = await getBase64(file.originFileObj);
+        if (!file || (!file.url && !file.preview)) {
+            try {
+                setIsUploading(true);
+
+                const formData = new FormData();
+                formData.append('file', file.originFileObj);
+                formData.append('upload_preset', 'xvfxjxgm');
+
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/dk6phxjab/image/upload`,
+                    { method: 'POST', body: formData },
+                );
+
+                const data = await response.json();
+                if (data.secure_url) {
+                    setStateProductDetail((prev) => ({
+                        ...prev,
+                        image: data.secure_url,
+                    }));
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                toast.error('Upload ảnh thất bại');
+            } finally {
+                setIsUploading(false);
+            }
         }
-        setStateProductDetail({
-            ...stateProductDetail,
-            image: file.preview,
-        });
     };
 
     const onUpdateProduct = () => {
@@ -658,642 +701,656 @@ const AdminProduct = () => {
     };
 
     return (
-        <div>
+        <Loading isLoading={isLoadingProduct || isFetching} size="small">
             <div>
-                <h1 className={styles.WrapperHeader}>Quản lý sản phẩm</h1>
-                <Button
-                    className={styles.WrapperAddProduct}
-                    onClick={() => {
-                        form.resetFields();
-                        setIsModalOpen(true);
-                    }}
-                >
-                    {/* <PlusOutlined style={{ fontSize: '60px' }} /> */}
-                    Thêm sản phẩm
-                </Button>
-                <div style={{ marginTop: '20px' }}>
-                    <TableComponent
-                        handleDeleteMany={handleDeleteProductMany}
-                        columns={columns}
-                        isLoading={isLoadingProduct}
-                        data={dataTable}
-                        onRow={(record, rowIndex) => {
-                            return {
-                                onClick: (event) => {
-                                    setRowSelected(record._id);
-                                },
-                            };
+                <div>
+                    <h1 className={styles.WrapperHeader}>Quản lý sản phẩm</h1>
+                    <Button
+                        className={styles.WrapperAddProduct}
+                        onClick={() => {
+                            form.resetFields();
+                            setIsModalOpen(true);
                         }}
-                    />
-                </div>
-                <Modal
-                    forceRender
-                    title="Tạo sản phẩm"
-                    open={isModalOpen}
-                    onCancel={handleCancel}
-                    footer={null}
-                    style={{ top: '50px' }}
-                >
-                    <Form
-                        name="basic"
-                        labelCol={{ span: 8 }}
-                        wrapperCol={{ span: 16 }}
-                        style={{
-                            maxWidth: 600,
-                            marginTop: '30px',
-                            marginRight: '20%',
-                        }}
-                        initialValues={{ remember: true }}
-                        onFinish={onFinish}
-                        autoComplete="off"
-                        form={formCreate}
                     >
-                        <Form.Item
-                            label="Name"
-                            name="name"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your name!',
-                                },
-                            ]}
+                        {/* <PlusOutlined style={{ fontSize: '60px' }} /> */}
+                        Thêm sản phẩm
+                    </Button>
+                    <div style={{ marginTop: '20px' }}>
+                        <TableComponent
+                            handleDeleteMany={handleDeleteProductMany}
+                            columns={columns}
+                            isLoading={isLoadingProduct}
+                            data={dataTable}
+                            onRow={(record, rowIndex) => {
+                                return {
+                                    onClick: (event) => {
+                                        setRowSelected(record._id);
+                                    },
+                                };
+                            }}
+                        />
+                    </div>
+                    <Modal
+                        forceRender
+                        title="Tạo sản phẩm"
+                        open={isModalOpen}
+                        onCancel={handleCancel}
+                        footer={null}
+                        style={{ top: '50px' }}
+                    >
+                        <Form
+                            name="basic"
+                            labelCol={{ span: 8 }}
+                            wrapperCol={{ span: 16 }}
+                            style={{
+                                maxWidth: 600,
+                                marginTop: '30px',
+                                marginRight: '20%',
+                            }}
+                            initialValues={{ remember: true }}
+                            onFinish={onFinish}
+                            autoComplete="off"
+                            form={formCreate}
                         >
-                            <Input
-                                value={stateProduct.name}
-                                onChange={handleOnchange}
-                                name="name"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Type"
-                            name="type"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your type!',
-                                },
-                            ]}
-                        >
-                            <Select
-                                value={stateProduct.type}
-                                onChange={handleChangeSelect}
-                                name="type"
-                                className={styles.WrapperInput}
-                                options={renderOptions(typeProduct?.data?.data)}
-                            />
-                        </Form.Item>
-                        {stateProduct.type === 'add_type' && (
                             <Form.Item
-                                label="New type"
-                                name="newType"
+                                label="Name"
+                                name="name"
                                 rules={[
                                     {
                                         required: true,
-                                        message: 'Please input your newType!',
+                                        message: 'Please input your name!',
                                     },
                                 ]}
                             >
                                 <Input
-                                    value={stateProduct.newType}
+                                    value={stateProduct.name}
                                     onChange={handleOnchange}
-                                    name="newType"
+                                    name="name"
                                     className={styles.WrapperInput}
                                 />
                             </Form.Item>
-                        )}
 
-                        <Form.Item
-                            label="Price"
-                            name="price"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your price!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.price}
-                                onChange={handleOnchange}
-                                name="price"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Count InStock"
-                            name="countInStock"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your countInStock!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.countInStock}
-                                onChange={handleOnchange}
-                                name="countInStock"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Rating"
-                            name="rating"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your rating!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.rating}
-                                onChange={handleOnchange}
-                                name="rating"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Discount"
-                            name="discount"
-                            rules={[
-                                {
-                                    required: true,
-                                    message:
-                                        'Please input discount of product!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.discount}
-                                onChange={handleOnchange}
-                                name="discount"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Description"
-                            name="description"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your description!',
-                                },
-                            ]}
-                        >
-                            <Input.TextArea
-                                value={stateProduct.description}
-                                onChange={handleOnchange}
-                                name="description"
-                                className={styles.WrapperInput}
-                                style={{ height: '150px' }}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="isForSale"
-                            name="isForSale"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your isForSale!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.isForSale}
-                                onChange={handleOnchange}
-                                name="isForSale"
-                                className={styles.WrapperInput}
-                                readOnly
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="isForRent"
-                            name="isForRent"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your isForRent!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.isForRent}
-                                onChange={handleOnchange}
-                                name="isForRent"
-                                className={styles.WrapperInput}
-                                readOnly
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="rentalPrice"
-                            name="rentalPrice"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your rentalPrice!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.rentalPrice}
-                                onChange={handleOnchange}
-                                name="rentalPrice"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="rentalDuration"
-                            name="rentalDuration"
-                            rules={[
-                                {
-                                    required: true,
-                                    message:
-                                        'Please input your rentalDuration!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProduct.rentalDuration}
-                                onChange={handleOnchange}
-                                name="rentalDuration"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Image"
-                            name="image"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your image!',
-                                },
-                            ]}
-                        >
-                            <Upload
-                                onChange={handleOnchangeAvatar}
-                                showUploadList={false}
-                                maxCount={1}
+                            <Form.Item
+                                label="Type"
+                                name="type"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your type!',
+                                    },
+                                ]}
                             >
-                                <Button className={styles.WrapperSelect}>
-                                    Upload png only
-                                </Button>
-                                {stateProduct?.image && (
-                                    <img
-                                        src={stateProduct?.image}
-                                        style={{
-                                            height: '55px',
-                                            width: '55px',
-                                            borderRadius: '50%',
-                                            objectFit: 'cover',
-                                        }}
-                                        alt="avatar"
+                                <Select
+                                    value={stateProduct.type}
+                                    onChange={handleChangeSelect}
+                                    name="type"
+                                    className={styles.WrapperInput}
+                                    options={renderOptions(
+                                        typeProduct?.data?.data,
+                                    )}
+                                />
+                            </Form.Item>
+                            {stateProduct.type === 'add_type' && (
+                                <Form.Item
+                                    label="New type"
+                                    name="newType"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Please input your newType!',
+                                        },
+                                    ]}
+                                >
+                                    <Input
+                                        value={stateProduct.newType}
+                                        onChange={handleOnchange}
+                                        name="newType"
+                                        className={styles.WrapperInput}
                                     />
-                                )}
-                            </Upload>
-                        </Form.Item>
+                                </Form.Item>
+                            )}
 
-                        <Form.Item label={null}>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                style={{
-                                    left: '84%',
-                                    marginTop: '20px',
-                                    padding: '25px 15px 25px 15px',
-                                    backgroundColor: '#76b8bf',
-                                }}
+                            <Form.Item
+                                label="Price"
+                                name="price"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your price!',
+                                    },
+                                ]}
                             >
-                                Tạo sản phẩm
-                            </Button>
-                        </Form.Item>
-                    </Form>
-                </Modal>
-                <DrawerComponent
-                    title="Chi tiết sản phẩm"
-                    isOpen={isOpenDrawer}
-                    // onClose={closeDrawer}
-                    onClose={() => {
-                        form.resetFields(); // Xóa dữ liệu khi nhấn Hủy
-                        setStateProductDetail({});
-                        setIsOpenDrawer(false);
-                    }}
-                    width="50%"
-                >
-                    <Form
-                        name="basic"
-                        labelCol={{ span: 6 }}
-                        wrapperCol={{ span: 16 }}
-                        style={{
-                            maxWidth: 600,
-                            marginTop: '10px',
-                            marginRight: '20%',
+                                <Input
+                                    value={stateProduct.price}
+                                    onChange={handleOnchange}
+                                    name="price"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Count InStock"
+                                name="countInStock"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your countInStock!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.countInStock}
+                                    onChange={handleOnchange}
+                                    name="countInStock"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Rating"
+                                name="rating"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your rating!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.rating}
+                                    onChange={handleOnchange}
+                                    name="rating"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Discount"
+                                name="discount"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input discount of product!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.discount}
+                                    onChange={handleOnchange}
+                                    name="discount"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Description"
+                                name="description"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your description!',
+                                    },
+                                ]}
+                            >
+                                <Input.TextArea
+                                    value={stateProduct.description}
+                                    onChange={handleOnchange}
+                                    name="description"
+                                    className={styles.WrapperInput}
+                                    style={{ height: '150px' }}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="isForSale"
+                                name="isForSale"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your isForSale!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.isForSale}
+                                    onChange={handleOnchange}
+                                    name="isForSale"
+                                    className={styles.WrapperInput}
+                                    readOnly
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="isForRent"
+                                name="isForRent"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your isForRent!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.isForRent}
+                                    onChange={handleOnchange}
+                                    name="isForRent"
+                                    className={styles.WrapperInput}
+                                    readOnly
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="rentalPrice"
+                                name="rentalPrice"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your rentalPrice!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.rentalPrice}
+                                    onChange={handleOnchange}
+                                    name="rentalPrice"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="rentalDuration"
+                                name="rentalDuration"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your rentalDuration!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProduct.rentalDuration}
+                                    onChange={handleOnchange}
+                                    name="rentalDuration"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Image"
+                                name="image"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your image!',
+                                    },
+                                ]}
+                            >
+                                <Upload
+                                    onChange={handleOnchangeAvatar}
+                                    showUploadList={false}
+                                    maxCount={1}
+                                    beforeUpload={() => false} // Ngăn chặn upload tự động
+                                    multiple={false}
+                                >
+                                    <Button className={styles.WrapperSelect}>
+                                        Tải lên ảnh (PNG/JPG)
+                                    </Button>
+                                    {stateProduct?.image && (
+                                        <img
+                                            src={stateProduct?.image}
+                                            style={{
+                                                height: '55px',
+                                                width: '55px',
+                                                borderRadius: '50%',
+                                                objectFit: 'cover',
+                                            }}
+                                            alt="avatar"
+                                        />
+                                    )}
+                                </Upload>
+                            </Form.Item>
+
+                            <Form.Item label={null}>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    style={{
+                                        left: '84%',
+                                        marginTop: '20px',
+                                        padding: '25px 15px 25px 15px',
+                                        backgroundColor: '#76b8bf',
+                                    }}
+                                >
+                                    Tạo sản phẩm
+                                </Button>
+                            </Form.Item>
+                        </Form>
+                    </Modal>
+                    <DrawerComponent
+                        title="Chi tiết sản phẩm"
+                        isOpen={isOpenDrawer}
+                        // onClose={closeDrawer}
+                        onClose={() => {
+                            form.resetFields(); // Xóa dữ liệu khi nhấn Hủy
+                            setStateProductDetail({});
+                            setIsOpenDrawer(false);
                         }}
-                        initialValues={{ remember: true }}
-                        onFinish={onUpdateProduct}
-                        autoComplete="on"
-                        form={formEdit}
+                        width="50%"
                     >
-                        <Form.Item
-                            label="Name"
-                            name="name"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your name!',
-                                },
-                            ]}
+                        <Form
+                            name="basic"
+                            labelCol={{ span: 6 }}
+                            wrapperCol={{ span: 16 }}
+                            style={{
+                                maxWidth: 600,
+                                marginTop: '10px',
+                                marginRight: '20%',
+                            }}
+                            initialValues={{ remember: true }}
+                            onFinish={onUpdateProduct}
+                            autoComplete="on"
+                            form={formEdit}
                         >
-                            <Input
-                                value={stateProductDetail.name}
-                                onChange={handleOnchangeDetail}
+                            <Form.Item
+                                label="Name"
                                 name="name"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Type"
-                            name="type"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your type!',
-                                },
-                            ]}
-                        >
-                            {/* <Input
-                                value={stateProductDetail.type}
-                                onChange={handleOnchangeDetail}
-                                name="type"
-                                className={styles.WrapperInput}
-                            /> */}
-
-                            <Select
-                                value={stateProductDetail.type}
-                                onChange={handleOnchangeDetail}
-                                name="type"
-                                className={styles.WrapperInput}
-                                // style={{ width: '130%' }}
-                                options={renderOptionsUpdate(
-                                    typeProduct?.data?.data,
-                                )}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Price"
-                            name="price"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your price!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.price}
-                                onChange={handleOnchangeDetail}
-                                name="price"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Count InStock"
-                            name="countInStock"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your countInStock!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.countInStock}
-                                onChange={handleOnchangeDetail}
-                                name="countInStock"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Rating"
-                            name="rating"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your rating!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.rating}
-                                onChange={handleOnchangeDetail}
-                                name="rating"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Discount"
-                            name="discount"
-                            rules={[
-                                {
-                                    required: true,
-                                    message:
-                                        'Please input discount of product !',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.discount}
-                                onChange={handleOnchangeDetail}
-                                name="discount"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            label="Description"
-                            name="description"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your description!',
-                                },
-                            ]}
-                        >
-                            <Input.TextArea
-                                value={stateProductDetail.description}
-                                onChange={handleOnchangeDetail}
-                                name="description"
-                                className={styles.WrapperInput}
-                                style={{ height: '150px' }}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="isForSale"
-                            name="isForSale"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your isForSale!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.isForSale}
-                                onChange={handleOnchangeDetail}
-                                name="isForSale"
-                                className={styles.WrapperInput}
-                                readOnly
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="isForRent"
-                            name="isForRent"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your isForRent!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.isForRent}
-                                onChange={handleOnchangeDetail}
-                                name="isForRent"
-                                className={styles.WrapperInput}
-                                readOnly
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="rentalPrice"
-                            name="rentalPrice"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your rentalPrice!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.rentalPrice}
-                                onChange={handleOnchangeDetail}
-                                name="rentalPrice"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="rentalDuration"
-                            name="rentalDuration"
-                            rules={[
-                                {
-                                    required: true,
-                                    message:
-                                        'Please input your rentalDuration!',
-                                },
-                            ]}
-                        >
-                            <Input
-                                value={stateProductDetail.rentalDuration}
-                                onChange={handleOnchangeDetail}
-                                name="rentalDuration"
-                                className={styles.WrapperInput}
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Image"
-                            name="image"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input your image!',
-                                },
-                            ]}
-                        >
-                            <Upload
-                                onChange={handleOnchangeAvatarDetail}
-                                showUploadList={false}
-                                maxCount={1}
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your name!',
+                                    },
+                                ]}
                             >
-                                <Button className={styles.WrapperSelect}>
-                                    Upload png only
-                                </Button>
-                                {stateProductDetail?.image && (
-                                    <img
-                                        src={stateProductDetail?.image}
-                                        style={{
-                                            height: '55px',
-                                            width: '55px',
-                                            borderRadius: '50%',
-                                            objectFit: 'cover',
-                                        }}
-                                        alt="avatar"
-                                    />
-                                )}
-                            </Upload>
-                        </Form.Item>
+                                <Input
+                                    value={stateProductDetail.name}
+                                    onChange={handleOnchangeDetail}
+                                    name="name"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
 
-                        <Form.Item label={null}>
+                            <Form.Item
+                                label="Type"
+                                name="type"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your type!',
+                                    },
+                                ]}
+                            >
+                                {/* <Input
+                                    value={stateProductDetail.type}
+                                    onChange={handleOnchangeDetail}
+                                    name="type"
+                                    className={styles.WrapperInput}
+                                /> */}
+
+                                <Select
+                                    value={stateProductDetail.type}
+                                    onChange={handleOnchangeDetail}
+                                    name="type"
+                                    className={styles.WrapperInput}
+                                    // style={{ width: '130%' }}
+                                    options={renderOptionsUpdate(
+                                        typeProduct?.data?.data,
+                                    )}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Price"
+                                name="price"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your price!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.price}
+                                    onChange={handleOnchangeDetail}
+                                    name="price"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Count InStock"
+                                name="countInStock"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your countInStock!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.countInStock}
+                                    onChange={handleOnchangeDetail}
+                                    name="countInStock"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Rating"
+                                name="rating"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your rating!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.rating}
+                                    onChange={handleOnchangeDetail}
+                                    name="rating"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Discount"
+                                name="discount"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input discount of product !',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.discount}
+                                    onChange={handleOnchangeDetail}
+                                    name="discount"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="Description"
+                                name="description"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your description!',
+                                    },
+                                ]}
+                            >
+                                <Input.TextArea
+                                    value={stateProductDetail.description}
+                                    onChange={handleOnchangeDetail}
+                                    name="description"
+                                    className={styles.WrapperInput}
+                                    style={{ height: '150px' }}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="isForSale"
+                                name="isForSale"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your isForSale!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.isForSale}
+                                    onChange={handleOnchangeDetail}
+                                    name="isForSale"
+                                    className={styles.WrapperInput}
+                                    readOnly
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="isForRent"
+                                name="isForRent"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your isForRent!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.isForRent}
+                                    onChange={handleOnchangeDetail}
+                                    name="isForRent"
+                                    className={styles.WrapperInput}
+                                    readOnly
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="rentalPrice"
+                                name="rentalPrice"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your rentalPrice!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.rentalPrice}
+                                    onChange={handleOnchangeDetail}
+                                    name="rentalPrice"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="rentalDuration"
+                                name="rentalDuration"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message:
+                                            'Please input your rentalDuration!',
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    value={stateProductDetail.rentalDuration}
+                                    onChange={handleOnchangeDetail}
+                                    name="rentalDuration"
+                                    className={styles.WrapperInput}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Image"
+                                name="image"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: 'Please input your image!',
+                                    },
+                                ]}
+                            >
+                                <Upload
+                                    onChange={handleOnchangeAvatarDetail}
+                                    showUploadList={false}
+                                    maxCount={1}
+                                    multiple={false}
+                                >
+                                    <Button className={styles.WrapperSelect}>
+                                        Tải lên ảnh (PNG/JPG)
+                                    </Button>
+                                    {stateProductDetail?.image && (
+                                        <img
+                                            src={stateProductDetail?.image}
+                                            style={{
+                                                height: '55px',
+                                                width: '55px',
+                                                borderRadius: '50%',
+                                                objectFit: 'cover',
+                                            }}
+                                            alt="avatar"
+                                        />
+                                    )}
+                                </Upload>
+                            </Form.Item>
+
+                            <Form.Item label={null}>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    style={{
+                                        left: '110%',
+                                        marginTop: '20px',
+                                        padding: '25px 15px 25px 15px',
+                                        backgroundColor: '#76b8bf',
+                                    }}
+                                >
+                                    Chỉnh sửa sản phẩm
+                                </Button>
+                            </Form.Item>
+                        </Form>
+                    </DrawerComponent>
+                    <ModalComponent
+                        title="Xóa sản phẩm"
+                        open={isModalOpenDelete}
+                        onCancel={handleCancelDelete}
+                        style={{ top: '50px' }}
+                        onOk={handleDeleteProduct}
+                        footer={[
                             <Button
-                                type="primary"
-                                htmlType="submit"
+                                key="cancel"
+                                onClick={handleCancelDelete}
                                 style={{
-                                    left: '110%',
-                                    marginTop: '20px',
-                                    padding: '25px 15px 25px 15px',
-                                    backgroundColor: '#76b8bf',
+                                    borderColor: '#76b8bf',
+                                    color: '#000',
                                 }}
                             >
-                                Chỉnh sửa sản phẩm
-                            </Button>
-                        </Form.Item>
-                    </Form>
-                </DrawerComponent>
-                <ModalComponent
-                    title="Xóa sản phẩm"
-                    open={isModalOpenDelete}
-                    onCancel={handleCancelDelete}
-                    style={{ top: '50px' }}
-                    onOk={handleDeleteProduct}
-                    footer={[
-                        <Button
-                            key="cancel"
-                            onClick={handleCancelDelete}
-                            style={{
-                                borderColor: '#76b8bf',
-                                color: '#000',
-                            }}
-                        >
-                            Hủy
-                        </Button>,
-                        <Button
-                            key="submit"
-                            type="primary"
-                            style={{
-                                backgroundColor: '#76b8bf', // Màu nền của nút OK
-                                borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
-                            }}
-                            onClick={handleDeleteProduct} // Hàm xử lý khi nhấn nút OK
-                        >
-                            OK
-                        </Button>,
-                    ]}
-                >
-                    <div>Bạn có chắc chắn xóa sản phẩm này không?</div>
-                </ModalComponent>
+                                Hủy
+                            </Button>,
+                            <Button
+                                key="submit"
+                                type="primary"
+                                style={{
+                                    backgroundColor: '#76b8bf', // Màu nền của nút OK
+                                    borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
+                                }}
+                                onClick={handleDeleteProduct} // Hàm xử lý khi nhấn nút OK
+                            >
+                                OK
+                            </Button>,
+                        ]}
+                    >
+                        <div>Bạn có chắc chắn xóa sản phẩm này không?</div>
+                    </ModalComponent>
+                </div>
             </div>
-        </div>
+        </Loading>
     );
 };
 

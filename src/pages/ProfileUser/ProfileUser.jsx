@@ -5,7 +5,7 @@ import ButtonComponents from '../../components/ButtonComponents/ButtonComponents
 import { useDispatch, useSelector } from 'react-redux';
 import * as UserService from '../../services/UserService.js';
 import { useMutationHook } from '../../hooks/useMutationHook.js';
-import { Bounce, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { updateUser } from '../../redux/slides/userSlide.js';
 import { Button, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
@@ -13,7 +13,6 @@ import { getBase64 } from '../../ultils.js';
 
 const ProfileUser = () => {
     const user = useSelector((state) => state.user);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const dispatch = useDispatch();
 
     const [email, setEmail] = useState('');
@@ -27,34 +26,26 @@ const ProfileUser = () => {
         const res = await UserService.updateUser(id, rests, access_token);
         return res;
     });
-    const { data, isSuccess, isError, error } = mutation;
+    const { data, isSuccess, isError } = mutation;
 
     useEffect(() => {
-        setEmail(user?.email);
-        setName(user?.name);
-        setPhone(user?.phone);
-        setAddress(user?.address);
-        setAvatar(user?.avatar);
+        setEmail(user?.email || '');
+        setName(user?.name || '');
+        setPhone(user?.phone || '');
+        setAddress(user?.address || '');
+        setAvatar(user?.avatar || '');
     }, [user]);
 
     useEffect(() => {
-        if (isSuccess || data?.status === 'OK') {
-            setIsSubmitting(true);
-            setIsSubmitting(false);
+        if (isSuccess && data?.status === 'OK') {
             toast.success('Cập nhật hồ sơ thành công', {
                 style: { fontSize: '1.5rem' },
             });
-            mutation.reset();
             handleGetDetailUser(user?.id, user?.access_token);
         } else if (isError || data?.status === 'ERR') {
-            const errorMessage =
-                error?.response?.data?.message ||
-                data?.message ||
-                'An unexpected error occurred';
-            toast.error(errorMessage, {
+            toast.error(data?.message || 'Có lỗi xảy ra', {
                 style: { fontSize: '1.5rem' },
             });
-            mutation.reset();
         }
     }, [isSuccess, isError, data]);
 
@@ -63,21 +54,10 @@ const ProfileUser = () => {
         dispatch(updateUser({ ...res?.data, access_token: token }));
     };
 
-    const handleOnchangeEmail = (value) => {
-        setEmail(value);
-    };
-
-    const handleOnchangeName = (value) => {
-        setName(value);
-    };
-
-    const handleOnchangePhone = (value) => {
-        setPhone(value);
-    };
-
-    const handleOnchangeAddress = (value) => {
-        setAddress(value);
-    };
+    const handleOnchangeEmail = (value) => setEmail(value);
+    const handleOnchangeName = (value) => setName(value);
+    const handleOnchangePhone = (value) => setPhone(value);
+    const handleOnchangeAddress = (value) => setAddress(value);
 
     const handleOnchangeAvatar = async ({ fileList }) => {
         const file = fileList[0];
@@ -98,110 +78,86 @@ const ProfileUser = () => {
             access_token: user?.access_token,
         });
     };
+
     return (
-        <div>
-            <div style={{ width: '1000px', margin: '0 auto' }}>
-                <h1 style={{ marginTop: '20px' }}>Thông tin người dùng</h1>
-                <div style={{ fontSize: '1.5rem', color: '#333' }}>
-                    Quản lý thông tin hồ sơ để bảo mật tài khoản
-                </div>
-                <div className={styles.WrapperContainer}>
-                    <div
-                        style={{
-                            flex: '1',
-                            marginLeft: '6%',
-                        }}
-                    >
-                        <div className={styles.WrapperSection}>
-                            <span>Tên</span>
-                            <InputForm
-                                style={{ marginBottom: '15px' }}
-                                className={styles.WrapperInput}
-                                value={name}
-                                onChange={handleOnchangeName}
-                            />
-                            <ButtonComponents
-                                onClick={handleUpdate}
-                                className={styles.WrapperButton}
-                                textButton="Cập nhật"
-                            />
-                        </div>
-                        <div className={styles.WrapperSection}>
-                            <span>Email</span>
-                            <InputForm
-                                style={{ marginBottom: '15px' }}
-                                className={styles.WrapperInput}
-                                value={email}
-                                onChange={handleOnchangeEmail}
-                            />
-                            <ButtonComponents
-                                onClick={handleUpdate}
-                                className={styles.WrapperButton}
-                                textButton="Cập nhật"
-                            />
-                        </div>
-                        <div className={styles.WrapperSection}>
-                            <span>Số điện thoại</span>
-                            <InputForm
-                                style={{ marginBottom: '15px' }}
-                                className={styles.WrapperInput}
-                                value={phone}
-                                onChange={handleOnchangePhone}
-                            />
-                            <ButtonComponents
-                                onClick={handleUpdate}
-                                className={styles.WrapperButton}
-                                textButton="Cập nhật"
-                            />
-                        </div>
-                        <div className={styles.WrapperSection}>
-                            <span>Địa chỉ</span>
-                            <InputForm
-                                style={{ marginBottom: '15px' }}
-                                className={styles.WrapperInput}
-                                value={address}
-                                onChange={handleOnchangeAddress}
-                            />
-                            <ButtonComponents
-                                onClick={handleUpdate}
-                                className={styles.WrapperButton}
-                                textButton="Cập nhật"
-                            />
-                        </div>
-                    </div>
-                    <div className={styles.WrapperPicture}>
-                        <Upload
-                            onChange={handleOnchangeAvatar}
-                            showUploadList={false}
-                            maxCount={1}
-                        >
-                            <Button
-                                icon={<UploadOutlined />}
-                                className={styles.WrapperSelect}
-                            >
-                                Upload png only
-                            </Button>
-                        </Upload>
-                        {avatar && (
-                            <img
-                                src={avatar}
-                                style={{
-                                    height: '70px',
-                                    width: '70px',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    marginTop: '30px',
-                                    marginBottom: '30px',
-                                }}
-                                alt="avatar"
-                            />
-                        )}
-                        <ButtonComponents
-                            onClick={handleUpdate}
-                            className={styles.WrapperSelect}
-                            textButton="Chọn ảnh"
+        <div className={styles.container}>
+            <h1 className={styles.title}>Hồ sơ người dùng</h1>
+            <p className={styles.subtitle}>
+                Quản lý thông tin để bảo mật tài khoản
+            </p>
+            <div className={styles.profileCard}>
+                <div className={styles.formSection}>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>Tên</label>
+                        <InputForm
+                            className={styles.input}
+                            value={name}
+                            onChange={handleOnchangeName}
+                            placeholder="Nhập tên của bạn"
                         />
                     </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>Email</label>
+                        <InputForm
+                            className={styles.input}
+                            value={email}
+                            onChange={handleOnchangeEmail}
+                            placeholder="Nhập email của bạn"
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>Số điện thoại</label>
+                        <InputForm
+                            className={styles.input}
+                            value={phone}
+                            onChange={handleOnchangePhone}
+                            placeholder="Nhập số điện thoại"
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>Địa chỉ</label>
+                        <InputForm
+                            className={styles.input}
+                            value={address}
+                            onChange={handleOnchangeAddress}
+                            placeholder="Nhập địa chỉ"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleUpdate}
+                        className={styles.updateButton}
+                        disabled={mutation.isLoading}
+                    >
+                        Cập nhật thông tin
+                    </button>
+                </div>
+                <div className={styles.avatarSection}>
+                    <div className={styles.avatarWrapper}>
+                        {avatar ? (
+                            <img
+                                src={avatar}
+                                alt="Avatar"
+                                className={styles.avatar}
+                            />
+                        ) : (
+                            <div className={styles.avatarPlaceholder}>
+                                Chưa có ảnh
+                            </div>
+                        )}
+                    </div>
+                    <Upload
+                        onChange={handleOnchangeAvatar}
+                        showUploadList={false}
+                        maxCount={1}
+                    >
+                        <Button
+                            icon={<UploadOutlined />}
+                            className={styles.uploadButton}
+                        >
+                            Chọn ảnh
+                        </Button>
+                    </Upload>
                 </div>
             </div>
         </div>

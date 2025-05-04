@@ -2,6 +2,7 @@
     padding: 20px 200px 20px 200px;
     background-color: rgb(240, 240, 240);
     height: 100vh;
+    min-height: 900px;
 
     h2 {
         margin-bottom: 30px;
@@ -22,6 +23,7 @@
         h3 {
             font-size: 18px;
             margin-bottom: 10px;
+            text-align: center;
         }
 
         .Box {
@@ -29,6 +31,9 @@
             padding: 15px;
             border: 1px solid #999999;
             border-radius: 8px;
+            text-align: center;
+            width: 500px;
+            margin: auto;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 
             p {

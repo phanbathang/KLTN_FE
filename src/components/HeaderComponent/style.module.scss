@@ -1,173 +1,453 @@
-.WrappperHeader {
-    padding: 10px 80px;
-    background-color: #007784;
+.headerContainer {
+    width: 100%;
+    background: linear-gradient(
+        135deg,
+        #007784,
+        #00a1b5
+    ); // Gradient nền header
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.wrappperHeader {
+    padding: 15px 80px;
     display: flex;
-    align-items: center; // Cần sửa đúng là align-items thay vì align-item
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1440px;
+    margin: 0 auto;
 }
 
-.WrappperHeaderLink {
-    width: 110px;
+.logoContainer {
+    padding-left: 0 !important;
 }
 
-.WrappperHeaderImg {
-    height: 80px;
+.wrappperHeaderLink {
+    width: 120px;
+}
+
+.wrappperHeaderImg {
+    height: 90px; // Tăng kích thước logo
     cursor: pointer;
+    transition: transform 0.3s ease;
+
+    &:hover {
+        transform: scale(1.05);
+    }
 }
 
-.WrapperHeaderAccount {
+.menuContainer {
     display: flex;
-    align-items: center; // Cần sửa đúng là align-items thay vì align-item
-    color: #fff;
-    gap: 10px;
-    margin-left: 20px;
+    align-items: center;
+    gap: 25px;
+    margin-left: -140px;
 }
 
-.WrappperHeaderText {
-    font-size: 12px;
-    color: #fff;
+.wrapperHome,
+.wrapperCategory,
+.wrapperMyOrder {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 5px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 2px;
+        background-color: #ffffff;
+        transition: width 0.3s ease-in-out;
+    }
+
+    &:hover {
+        color: #ffeb3b; // Màu vàng khi hover
+    }
+
+    &:hover::after {
+        width: 100%;
+    }
+}
+
+.wrapperCategory {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+
+    &:hover {
+        color: #ffeb3b !important;
+        background: transparent !important;
+    }
+}
+
+.searchContainer {
+    flex: 1;
+    max-width: 500px;
+    margin: 0 20px;
 }
 
 .searchInput {
-    width: 92%;
-    padding: 0 30px 0 30px;
-}
-
-.WrapperPopover {
-    cursor: pointer;
-    padding: 10px 0 10px 0;
-    border-bottom: 1px solid #000;
-    &:hover {
-        opacity: 0.5;
-    }
-}
-
-.WrapperAdmin {
-    cursor: pointer;
-    padding: 10px 0 10px 0;
-    border-bottom: 1px solid #000;
-    &:hover {
-        opacity: 0.5;
-    }
-}
-
-.WrapperPopoverLogout {
-    cursor: pointer;
-    padding: 10px 0 5px 0;
-    &:hover {
-        opacity: 0.5;
-    }
-}
-
-.WrapperHome {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 600;
-    position: relative;
-    text-decoration: none;
-    padding-bottom: 5px;
-    margin-right: 20px;
-    cursor: pointer;
-
-    &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 0; // Ban đầu ẩn đi
-        height: 2px;
-        background-color: #fff; // Màu gạch dưới
-        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
-    }
-
-    &:hover::after {
-        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
-    }
-}
-
-.WrapperCategory {
-    color: #fff;
-    margin: auto;
-    background-color: transparent;
-    box-shadow: none;
+    width: 71%;
+    height: 42px;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border: none;
-    font-size: 18px;
-    font-weight: 600;
-    position: relative; // Cần để sử dụng ::after
-    text-decoration: none; // Loại bỏ gạch chân mặc định
-    padding-bottom: 5px;
-    margin-right: 20px;
+    margin-left: -40px;
+    :global {
+        .ant-input {
+            border-radius: 20px 0 0 20px;
+            padding: 0 15px;
+            font-size: 14px;
+        }
+
+        .ant-btn {
+            border-radius: 0 20px 20px 0;
+            background: #ff6f61;
+            color: #ffffff;
+            border: none;
+            font-weight: 600;
+            transition: background 0.3s ease;
+
+            &:hover {
+                background: #ff8c7a;
+            }
+        }
+    }
+}
+
+.accountCartContainer {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.wrapperHeaderAccount {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     cursor: pointer;
+}
+
+.avatar {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    transition: transform 0.3s ease;
 
     &:hover {
-        color: #fff !important;
-        background-color: transparent !important;
-        font-size: 18px;
-        font-weight: 600;
-        text-align: center;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 0; // Ban đầu ẩn đi
-        height: 2px;
-        background-color: #fff; // Màu gạch dưới
-        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
-    }
-
-    &:hover::after {
-        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
+        transform: scale(1.1);
     }
 }
 
-.WrapperMyOrder {
-    color: #fff;
-    width: 146px;
-    font-size: 18px;
+.userIcon {
+    font-size: 32px;
+    color: #ffffff;
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #ffeb3b;
+    }
+}
+
+.accountName {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ffffff;
+    font-size: 14px;
     font-weight: 600;
-    position: relative;
-    text-decoration: none;
-    padding-bottom: 5px;
-    cursor: pointer;
+    transition: color 0.3s ease;
 
-    &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 0; // Ban đầu ẩn đi
-        height: 2px;
-        background-color: #fff; // Màu gạch dưới
-        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
-    }
-
-    &:hover::after {
-        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
+    &:hover {
+        color: #ffeb3b;
     }
 }
 
-.WrapperCart {
-    color: #fff;
-    position: relative;
-    text-decoration: none;
-    margin-left: 15px;
-    padding-bottom: 5px;
-    cursor: pointer;
+.loginRegister {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.3s ease;
 
-    &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 0; // Ban đầu ẩn đi
-        height: 2px;
-        background-color: #fff; // Màu gạch dưới
-        transition: width 0.3s ease-in-out; // Hiệu ứng chạy từ trái sang phải
+    &:hover {
+        color: #ffeb3b;
+    }
+}
+
+.dropdownIcon {
+    font-size: 12px;
+    color: #ffffff;
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #ffeb3b;
+    }
+}
+
+.wrapperCart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #ffffff;
+    cursor: pointer;
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #ffeb3b;
+    }
+}
+
+.cartIcon {
+    font-size: 32px;
+    color: #ffeb3b;
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #ffeb3b;
+    }
+}
+
+.cartBadge {
+    :global {
+        .ant-badge-count {
+            background: #ff6f61;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    }
+}
+
+.cartText {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    transition: color 0.3s ease;
+    margin-left: 7px;
+    &:hover {
+        color: #ffeb3b;
+    }
+}
+
+.popoverContent {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 10px 0;
+}
+
+.wrapperPopover,
+.wrapperAdmin,
+.wrapperPopoverLogout {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+
+    &:hover {
+        background: #f5f7fa;
+        color: #ff6f61;
+    }
+}
+
+.wrapperPopoverLogout {
+    border-bottom: none;
+}
+
+.dropdownMenu {
+    background: #ffffff !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 10px 0;
+}
+
+.menuItem {
+    padding: 12px 20px !important;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+        border-bottom: none;
     }
 
-    &:hover::after {
-        width: 100%; // Khi hover, gạch dưới xuất hiện từ trái sang phải
+    &:hover {
+        background: #f5f7fa !important;
+
+        :global {
+            .type-product {
+                color: #ff6f61;
+            }
+        }
+    }
+
+    :global {
+        .type-product {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2c3e50;
+            transition: color 0.3s ease;
+        }
+    }
+}
+
+.dropdownMenu {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+}
+
+.menuItem {
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+        background-color: #f3f4f6;
+    }
+}
+
+.cartIcon {
+    font-size: 20px;
+    color: #ffeb3b;
+}
+
+.cartBadge {
+    .ant-badge-count {
+        background-color: #3b82f6;
+        color: #fff;
+        font-size: 12px;
+        padding: 0 6px;
+        height: 18px;
+        line-height: 18px;
+    }
+}
+
+.cartText {
+    font-size: 14px;
+    color: #fff;
+    margin-left: 8px;
+}
+
+.wrapperCart {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 12px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+}
+
+// Responsive design
+@media (max-width: 1024px) {
+    .wrappperHeader {
+        padding: 15px 20px;
+    }
+
+    .menuContainer {
+        gap: 15px;
+        margin-left: -50px;
+    }
+
+    .searchContainer {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .wrappperHeader {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+
+    .logoContainer {
+        flex: 0 0 50%;
+    }
+
+    .menuContainer {
+        flex: 0 0 100%;
+        justify-content: center;
+        margin: 10px 0;
+        gap: 10px;
+    }
+
+    .searchContainer {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin: 10px 0;
+    }
+
+    .accountCartContainer {
+        flex: 0 0 50%;
+        justify-content: flex-end;
+    }
+
+    .wrapperHome,
+    .wrapperCategory,
+    .wrapperMyOrder {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .wrappperHeader {
+        padding: 10px;
+    }
+
+    .wrappperHeaderLink {
+        width: 100px;
+    }
+
+    .wrappperHeaderImg {
+        height: 70px;
+    }
+
+    .menuContainer {
+        gap: 5px;
+    }
+
+    .wrapperHome,
+    .wrapperCategory,
+    .wrapperMyOrder {
+        font-size: 14px;
+    }
+
+    .accountName,
+    .loginRegister {
+        font-size: 12px;
+    }
+
+    .cartIcon,
+    .userIcon {
+        font-size: 28px;
     }
 }

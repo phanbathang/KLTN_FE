@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
+import Loading from '../LoadingComponent/Loading.jsx';
 
 dayjs.extend(isBetween);
 
@@ -34,8 +35,11 @@ const AdminOrder = () => {
         queryFn: OrderService.getAllOrder,
     });
 
-    const { isLoading: isLoadingOrder, data: orders = { data: [] } } =
-        queryOrder;
+    const {
+        isLoading: isLoadingOrder,
+        isFetching,
+        data: orders = { data: [] },
+    } = queryOrder;
 
     const searchInput = useRef(null);
 
@@ -281,128 +285,131 @@ const AdminOrder = () => {
     }, 0);
 
     return (
-        <div>
-            <h1 className={styles.WrapperHeader}>Quản lý đơn hàng</h1>
+        <Loading isLoading={isLoadingOrder || isFetching} size="small">
+            <div>
+                <h1 className={styles.WrapperHeader}>Quản lý đơn hàng</h1>
 
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                }}
-            >
-                <div style={{ height: '200px', width: '200px' }}>
-                    <PieChartComponent data={orders?.data} />
-                </div>
+                <div className={styles.WrapperSection}>
+                    <div style={{ height: '200px', width: '200px' }}>
+                        <PieChartComponent data={orders?.data} />
+                    </div>
 
-                {/* Hiển thị tổng tiền theo ngày đã chọn */}
-                <div className={styles.WrapperTotal}>
-                    <h2>
-                        Tổng doanh thu {selectedRange ? `` : 'tất cả các ngày'}:
-                    </h2>
-                    <p>
-                        <strong>
-                            {selectedRange[0] && selectedRange[1]
-                                ? `Từ ${selectedRange[0]} đến ${selectedRange[1]}`
-                                : 'Tất cả các ngày'}
-                            :
-                        </strong>{' '}
-                        <span style={{ color: 'red' }}>
-                            {selectedRange[0] && selectedRange[1]
-                                ? convertPrice(totalOrderByDateRange)
-                                : convertPrice(
-                                      orders?.data?.reduce(
-                                          (acc, order) =>
-                                              acc + order.totalPrice,
-                                          0,
-                                      ),
-                                  )}
-                        </span>
-                    </p>
-                </div>
-
-                {/* Chọn ngày */}
-                <div className={styles.WrapperDate}>
-                    <h2 style={{ marginRight: '5px' }}>Chọn ngày:</h2>
-                    <DatePicker.RangePicker
-                        onChange={handleDateChange}
-                        format="DD/MM/YYYY"
-                    />
-                </div>
-            </div>
-            <div style={{ marginTop: '20px' }}>
-                <TableComponent
-                    style={{ position: 'relative' }}
-                    columns={columns}
-                    data={dataTable}
-                />
-            </div>
-
-            <Modal
-                title={
-                    <span
-                        style={{
-                            fontSize: '20px',
-                            fontWeight: 'bold',
-                            color: '#007784',
-                        }}
-                    >
-                        Chi tiết đơn hàng
-                    </span>
-                }
-                open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                footer={[
-                    <Button key="close" onClick={() => setIsModalOpen(false)}>
-                        Đóng
-                    </Button>,
-                ]}
-            >
-                {selectedOrder ? (
-                    <div>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Tên sản phẩm:</strong> {selectedOrder.name}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Số lượng:</strong> {selectedOrder.amount}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Tên khách hàng:</strong>{' '}
-                            {selectedOrder.userName}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Số điện thoại:</strong>{' '}
-                            {selectedOrder.phone}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Địa chỉ:</strong> {selectedOrder.address}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Phương thức thanh toán:</strong>{' '}
-                            {selectedOrder.paymentMethod}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Đã thanh toán:</strong>{' '}
-                            {selectedOrder.isPaid}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Đã giao hàng:</strong>{' '}
-                            {selectedOrder.isDelivered}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Tổng tiền:</strong>{' '}
-                            {selectedOrder.totalPrice}
-                        </p>
-                        <p style={{ marginBottom: '10px' }}>
-                            <strong>Ngày đặt hàng:</strong>{' '}
-                            {selectedOrder.createdAt}
+                    {/* Hiển thị tổng tiền theo ngày đã chọn */}
+                    <div className={styles.WrapperTotal}>
+                        <h2>
+                            Tổng doanh thu{' '}
+                            {selectedRange ? `` : 'tất cả các ngày'}:
+                        </h2>
+                        <p>
+                            <strong>
+                                {selectedRange[0] && selectedRange[1]
+                                    ? `Từ ${selectedRange[0]} đến ${selectedRange[1]}`
+                                    : 'Tất cả các ngày'}
+                                :
+                            </strong>{' '}
+                            <span style={{ color: 'red', fontWeight: 'bold' }}>
+                                {selectedRange[0] && selectedRange[1]
+                                    ? convertPrice(totalOrderByDateRange)
+                                    : convertPrice(
+                                          orders?.data?.reduce(
+                                              (acc, order) =>
+                                                  acc + order.totalPrice,
+                                              0,
+                                          ),
+                                      )}
+                            </span>
                         </p>
                     </div>
-                ) : (
-                    <p>Đang tải dữ liệu...</p>
-                )}
-            </Modal>
-        </div>
+
+                    {/* Chọn ngày */}
+                    <div className={styles.WrapperDate}>
+                        <h2 style={{ marginRight: '5px' }}>Chọn ngày:</h2>
+                        <DatePicker.RangePicker
+                            onChange={handleDateChange}
+                            format="DD/MM/YYYY"
+                        />
+                    </div>
+                </div>
+                <div style={{ marginTop: '20px' }}>
+                    <TableComponent
+                        style={{ position: 'relative' }}
+                        columns={columns}
+                        data={dataTable}
+                    />
+                </div>
+
+                <Modal
+                    title={
+                        <span
+                            style={{
+                                fontSize: '20px',
+                                fontWeight: 'bold',
+                                color: '#007784',
+                            }}
+                        >
+                            Chi tiết đơn hàng
+                        </span>
+                    }
+                    open={isModalOpen}
+                    onCancel={() => setIsModalOpen(false)}
+                    footer={[
+                        <Button
+                            key="close"
+                            onClick={() => setIsModalOpen(false)}
+                        >
+                            Đóng
+                        </Button>,
+                    ]}
+                >
+                    {selectedOrder ? (
+                        <div>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Tên sản phẩm:</strong>{' '}
+                                {selectedOrder.name}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Số lượng:</strong>{' '}
+                                {selectedOrder.amount}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Tên khách hàng:</strong>{' '}
+                                {selectedOrder.userName}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Số điện thoại:</strong>{' '}
+                                {selectedOrder.phone}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Địa chỉ:</strong>{' '}
+                                {selectedOrder.address}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Phương thức thanh toán:</strong>{' '}
+                                {selectedOrder.paymentMethod}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Đã thanh toán:</strong>{' '}
+                                {selectedOrder.isPaid}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Đã giao hàng:</strong>{' '}
+                                {selectedOrder.isDelivered}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Tổng tiền:</strong>{' '}
+                                {selectedOrder.totalPrice}
+                            </p>
+                            <p style={{ marginBottom: '10px' }}>
+                                <strong>Ngày đặt hàng:</strong>{' '}
+                                {selectedOrder.createdAt}
+                            </p>
+                        </div>
+                    ) : (
+                        <p>Đang tải dữ liệu...</p>
+                    )}
+                </Modal>
+            </div>
+        </Loading>
     );
 };
 

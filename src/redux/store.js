@@ -3,6 +3,8 @@ import productReducer from './slides/productSlide';
 import userReducer from './slides/userSlide';
 import orderReducer from './slides/orderSlide';
 import borrowReducer from './slides/borrowSlide';
+import paymentReducer from './slides/paymentSlide';
+
 import {
     persistStore,
     persistReducer,
@@ -19,7 +21,8 @@ const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    blacklist: ['product', 'user'],
+    blacklist: ['user'],
+    whitelist: ['product', 'order', 'payment', 'borrow'], // Chỉ lưu reducer product (bao gồm wishlist)
 };
 
 const rootReducer = combineReducers({
@@ -27,6 +30,7 @@ const rootReducer = combineReducers({
     user: userReducer,
     order: orderReducer,
     borrow: borrowReducer,
+    payment: paymentReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

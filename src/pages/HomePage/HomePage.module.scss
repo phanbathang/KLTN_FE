@@ -1,64 +1,325 @@
-.wrapperTypeProduct {
-    display: flex;
-    align-items: center;
-    font-size: 1.7rem;
-    gap: 24px;
-    border-bottom: 1px solid #000;
-    justify-content: flex-start;
-    height: 44px;
-    background-color: #fff;
+.homePageContainer {
+    background-color: #f5f7fa;
+    padding: 0;
+    min-height: 100vh;
 }
 
-.WrapperButton {
-    border: 1px solid #007784;
-    color: #007784;
-    width: 240px;
-    height: 38px;
-    border-radius: 4px;
-    font-weight: 500;
+.sliderContainer {
+    width: 100%;
+    margin-bottom: 40px;
+    // Style cho SliderComponents
+    :global {
+        .ant-carousel {
+            .slick-slide {
+                img {
+                    width: 100%;
+                    height: 500px; // Tăng chiều cao banner
+                    object-fit: cover;
+                    border-radius: 0; // Full-width nên không cần bo góc
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    transition: transform 0.5s ease;
+                }
+            }
 
-    &:hover {
-        color: #fff;
-        background-color: #007784;
+            .slick-prev,
+            .slick-next {
+                width: 40px;
+                height: 40px;
+                background: rgba(0, 0, 0, 0.5);
+                border-radius: 50%;
+                z-index: 1;
+
+                &:hover {
+                    background: rgba(0, 0, 0, 0.8);
+                }
+            }
+
+            .slick-prev {
+                left: 20px;
+            }
+
+            .slick-next {
+                right: 20px;
+            }
+
+            .slick-dots {
+                bottom: 20px;
+
+                li {
+                    button {
+                        width: 12px;
+                        height: 12px;
+                        background: #ffffff;
+                        border-radius: 50%;
+                        opacity: 0.6;
+                    }
+                }
+
+                li.slick-active {
+                    button {
+                        background: #ff6f61;
+                        opacity: 1;
+                    }
+                }
+            }
+        }
     }
 }
 
-.WrapperProducts {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 21px;
-    flex-wrap: wrap;
-    // justify-content: space-between;
-}
-
-// HomePage.module.scss
-.slick-prev,
-.slick-next {
-    color: #000;
-    font-size: 20px;
-    background-color: rgba(0, 0, 0, 0.6);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+.wrapperTypeProduct {
     display: flex;
     justify-content: center;
-    align-items: center;
-    z-index: 1;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px 120px;
+    background: linear-gradient(135deg, #ffffff, #f0f0f0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin: -20px 0 20px 0;
+
+    // Style cho TypeProduct (danh mục sản phẩm)
+    :global {
+        .type-product {
+            padding: 12px 25px;
+            background: #ffffff;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+
+            &:hover {
+                background: #ff6f61;
+                color: #ffffff;
+                transform: translateY(-3px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+        }
+    }
 }
 
-.slick-prev:hover,
-.slick-next:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+.productsSection {
+    padding: 0 120px;
+    margin-bottom: 40px;
+
+    .sectionTitle {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+
+        &::after {
+            content: '';
+            width: 60px;
+            height: 4px;
+            background: #007784;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+    }
 }
 
-.slick-prev:before,
-.slick-next:before {
-    color: #fff;
-    font-size: 18px;
+.wrapperProducts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 25px;
+
+    // Style cho CardComponent (sản phẩm)
+    :global {
+        .card-component {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.5s ease-in-out;
+
+            &:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            img {
+                width: 100%;
+                height: 220px;
+                object-fit: cover;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .ant-card-body {
+                padding: 15px;
+
+                .ant-card-meta-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #2c3e50;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .ant-card-meta-description {
+                    font-size: 14px;
+                    color: #7f8c8d;
+                    margin-bottom: 10px;
+                }
+
+                .price {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #e74c3c;
+                }
+
+                .rating {
+                    font-size: 14px;
+                    color: #f39c12;
+                }
+            }
+        }
+    }
 }
 
-.WrapperImg {
+.buttonContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.wrapperButton {
+    padding: 12px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    border: none;
+    border-radius: 25px;
+    background-color: #007784;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: #007784;
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+}
+
+.adImageContainer {
+    padding: 0 120px;
+    margin-bottom: 40px;
+}
+
+.wrapperImg {
     width: 100%;
-    height: 470px;
+    height: 350px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+
+    &:hover {
+        transform: scale(1.02);
+    }
+}
+
+// Hiệu ứng fade-in cho sản phẩm
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .sliderContainer {
+        :global {
+            .ant-carousel {
+                .slick-slide {
+                    img {
+                        height: 300px;
+                    }
+                }
+            }
+        }
+    }
+
+    .wrapperTypeProduct {
+        padding: 20px 20px;
+        gap: 10px;
+    }
+
+    .productsSection {
+        padding: 0 20px;
+
+        .sectionTitle {
+            font-size: 24px;
+        }
+    }
+
+    .wrapperProducts {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+    }
+
+    .adImageContainer {
+        padding: 0 20px;
+    }
+
+    .wrapperImg {
+        height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sliderContainer {
+        :global {
+            .ant-carousel {
+                .slick-slide {
+                    img {
+                        height: 200px;
+                    }
+                }
+            }
+        }
+    }
+
+    .wrapperTypeProduct {
+        padding: 15px 10px;
+        gap: 8px;
+
+        :global {
+            .type-product {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+        }
+    }
+
+    .productsSection {
+        padding: 0 10px;
+
+        .sectionTitle {
+            font-size: 20px;
+        }
+    }
+
+    .wrapperProducts {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+
+    .wrapperButton {
+        padding: 10px 30px;
+        font-size: 14px;
+    }
 }

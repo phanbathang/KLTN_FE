@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Row, Col, Button, Form, Input, Radio } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { convertPrice } from '../../ultils.js';
@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { removeAllOrderProduct } from '../../redux/slides/orderSlide.js';
 import { PayPalButton } from 'react-paypal-button-v2';
 import Loading from '../../components/LoadingComponent/Loading.jsx';
+import { setCaptureId } from '../../redux/slides/paymentSlide.js';
 
 const PaymentPage = () => {
     const order = useSelector((state) => state.order);
@@ -22,11 +23,12 @@ const PaymentPage = () => {
     const [payment, setPayment] = useState('later_money');
     const [delivery, setDelivery] = useState('fast');
     const [sdkReady, setSdkReady] = useState(false);
+    const [hasProcessed, setHasProcessed] = useState(false); // Thêm state để kiểm soát xử lý
+    const processedRef = useRef(false); // Thêm useRef để kiểm soát xử lý
     const [stateUserDetail, setStateUserDetail] = useState({
         name: '',
         phone: '',
         address: '',
-        city: '',
     });
 
     const navigate = useNavigate();
@@ -44,7 +46,7 @@ const PaymentPage = () => {
         if (isOpenModalUpdateInfo) {
             setStateUserDetail({
                 // ...stateUserDetail,
-                city: user?.city,
+
                 name: user?.name,
                 phone: user?.phone,
                 address: user?.address,
@@ -59,7 +61,6 @@ const PaymentPage = () => {
             user?.name &&
             user?.address &&
             user?.phone &&
-            user?.city &&
             priceMemo &&
             user?.id
         ) {
@@ -72,8 +73,8 @@ const PaymentPage = () => {
                     fullName: user?.name,
                     address: user?.address,
                     phone: user?.phone,
-                    city: user?.city,
                     paymentMethod: payment,
+                    deliveryMethod: delivery,
                     itemsPrice: priceMemo,
                     shippingPrice: priceDeliveryMemo,
                     totalPrice: priceTotalMemo,
@@ -101,12 +102,14 @@ const PaymentPage = () => {
     const { data: dataAdd, isSuccess, isError } = mutationAddOrder;
 
     useEffect(() => {
-        if (isSuccess && dataAdd?.status === 'OK') {
+        if (isSuccess && dataAdd?.status === 'OK' && !processedRef.current) {
+            console.log('Đơn hàng đã được tạo thành công trong PaymentPage!');
+            processedRef.current = true; // Đánh dấu đã xử lý
+            setIsLoading(false); // Tắt spin
+            localStorage.removeItem('pendingOrder');
             localStorage.removeItem('cart_' + user?.id);
-            const arrayOrdered = [];
-            order?.orderItemSelected?.forEach((e) => {
-                arrayOrdered.push(e.product);
-            });
+            const arrayOrdered =
+                order?.orderItemSelected?.map((e) => e.product) || [];
             dispatch(removeAllOrderProduct({ listChecked: arrayOrdered }));
             toast.success('Đặt hàng thành công.', {
                 style: { fontSize: '1.5rem' },
@@ -116,15 +119,21 @@ const PaymentPage = () => {
                     delivery,
                     payment,
                     orders: order?.orderItemSelected,
-                    priceTotalMemo: priceTotalMemo,
+                    priceTotalMemo,
                 },
             });
-        } else if (isError || dataAdd?.status === 'ERR') {
-            toast.error('Đặt hàng thành công không thành công.', {
+        } else if (
+            isError ||
+            (dataAdd?.status === 'ERR' && !processedRef.current)
+        ) {
+            console.error('Lỗi khi tạo đơn hàng trong PaymentPage:', dataAdd);
+            processedRef.current = true; // Đánh dấu đã xử lý
+            setIsLoading(false); // Tắt spin nếu lỗi
+            toast.error('Đặt hàng không thành công.', {
                 style: { fontSize: '1.5rem' },
             });
         }
-    }, [isSuccess, isError]);
+    }, [isSuccess, isError, dataAdd]);
 
     const handleDelivery = (e) => {
         setDelivery(e.target.value);
@@ -146,7 +155,7 @@ const PaymentPage = () => {
         const { data } = await PaymentService.getConfig();
         const script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = `https://sandbox.paypal.com/sdk/js?client-id=${data}`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${data}&currency=USD`;
         script.async = true;
         script.onload = () => {
             setSdkReady(true);
@@ -155,6 +164,13 @@ const PaymentPage = () => {
     };
 
     const onSuccessPaypal = (details, data) => {
+        const captureId =
+            details?.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+
+        if (captureId) {
+            dispatch(setCaptureId(captureId)); // Lưu captureId vào Redux
+        }
+
         setIsLoading(true); // Bật trạng thái loading
         mutationAddOrder.mutate(
             {
@@ -163,8 +179,8 @@ const PaymentPage = () => {
                 fullName: user?.name,
                 address: user?.address,
                 phone: user?.phone,
-                city: user?.city,
                 paymentMethod: payment,
+                deliveryMethod: delivery,
                 itemsPrice: priceMemo,
                 shippingPrice: priceDeliveryMemo,
                 totalPrice: priceTotalMemo,
@@ -178,6 +194,76 @@ const PaymentPage = () => {
             },
         );
     };
+
+    const handleVNPayPayment = async () => {
+        setIsLoading(true);
+        try {
+            if (!order?.orderItemSelected || !priceTotalMemo) {
+                toast.error(
+                    'Dữ liệu đơn hàng không đầy đủ. Vui lòng kiểm tra giỏ hàng.',
+                );
+                setIsLoading(false);
+                return;
+            }
+
+            const orderData = {
+                delivery,
+                deliveryMethod: delivery, // Thêm deliveryMethod để khớp schema
+                payment,
+                orders: order?.orderItemSelected,
+                priceMemo: priceMemo || 0,
+                priceDeliveryMemo: priceDeliveryMemo || 0,
+                priceTotalMemo: priceTotalMemo || 0,
+            };
+            console.log('Saving to localStorage:', orderData);
+            localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+
+            const response = await PaymentService.createVNPayPayment({
+                amount: priceTotalMemo,
+                orderId: `ORDER_${new Date().getTime()}`,
+                ipAddr: window.location.hostname,
+            });
+            const { paymentUrl } = response.data;
+            window.location.href = paymentUrl;
+        } catch (error) {
+            console.error('Error in handleVNPayPayment:', error);
+            toast.error('Lỗi khi tạo thanh toán VNPay.');
+            setIsLoading(false);
+        }
+    };
+
+    const deliveryOptions = [
+        {
+            value: 'fast',
+            label: 'FAST - Giao Hàng Tiết Kiệm',
+            time: '2-3 ngày',
+            color: '#ea8500',
+        },
+        {
+            value: 'gojek',
+            label: 'GOJEK - Giao Hàng Nhanh',
+            time: '1-2 ngày',
+            color: '#00b14f',
+        },
+    ];
+
+    const paymentOptions = [
+        {
+            value: 'later_money',
+            label: 'Thanh Toán Khi Nhận Hàng',
+            desc: 'Thanh toán bằng tiền mặt khi nhận hàng tại nhà',
+        },
+        {
+            value: 'paypal',
+            label: 'Thanh Toán Qua PayPal',
+            desc: 'Thanh toán an toàn qua cổng PayPal quốc tế',
+        },
+        {
+            value: 'vnpay',
+            label: 'Thanh Toán Qua VNPay',
+            desc: 'Thanh toán nhanh chóng qua VNPay nội địa',
+        },
+    ];
 
     return (
         <Loading isLoading={isLoading}>
@@ -196,111 +282,216 @@ const PaymentPage = () => {
                         <div
                             style={{
                                 backgroundColor: '#fff',
-                                padding: '20px',
-                                borderRadius: '5px',
+                                padding: '25px',
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                                border: '1px solid #e8e8e8',
                             }}
                         >
-                            {/* Chọn phương thức giao hàng */}
-                            <div style={{ marginBottom: '20px' }}>
-                                <h3 style={{ marginBottom: '10px' }}>
-                                    Chọn phương thức giao hàng
-                                </h3>
-                                <div
+                            {/* Phương thức giao hàng */}
+                            <div style={{ marginBottom: '30px' }}>
+                                <h3
                                     style={{
-                                        padding: '20px',
-                                        backgroundColor: '#f0f8ff',
-                                        borderRadius: '5px',
+                                        marginBottom: '20px',
+                                        fontSize: '20px',
+                                        color: '#333',
+                                        fontWeight: '500',
+                                        borderBottom: '2px solid #1890ff',
+                                        paddingBottom: '8px',
+                                        display: 'inline-block',
                                     }}
-                                    onChange={handleDelivery}
-                                    value={delivery}
                                 >
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <input
-                                            type="radio"
-                                            id="fast"
-                                            name="deliveryMethod"
-                                            value="fast"
-                                        />
-                                        <label
-                                            style={{ marginLeft: '10px' }}
-                                            htmlFor="fast"
-                                        >
-                                            <span
+                                    Phương Thức Giao Hàng
+                                </h3>
+                                <Row gutter={[16, 16]}>
+                                    {deliveryOptions.map((option) => (
+                                        <Col span={12} key={option.value}>
+                                            <div
                                                 style={{
-                                                    color: '#ea8500',
-                                                    fontWeight: 'bold',
+                                                    border:
+                                                        delivery ===
+                                                        option.value
+                                                            ? `2px solid ${option.color}`
+                                                            : '1px solid #d9d9d9',
+                                                    borderRadius: '8px',
+                                                    padding: '15px',
+                                                    backgroundColor:
+                                                        delivery ===
+                                                        option.value
+                                                            ? `${option.color}10`
+                                                            : '#fff',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s',
                                                 }}
+                                                onMouseEnter={(e) =>
+                                                    (e.currentTarget.style.border = `2px solid ${option.color}`)
+                                                }
+                                                onMouseLeave={(e) =>
+                                                    (e.currentTarget.style.border =
+                                                        delivery ===
+                                                        option.value
+                                                            ? `2px solid ${option.color}`
+                                                            : '1px solid #d9d9d9')
+                                                }
+                                                onClick={() =>
+                                                    setDelivery(option.value)
+                                                }
                                             >
-                                                FAST
-                                            </span>{' '}
-                                            Giao hàng tiết kiệm
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <input
-                                            type="radio"
-                                            id="gojek"
-                                            name="deliveryMethod"
-                                            value="gojek"
-                                        />
-                                        <label
-                                            style={{ marginLeft: '10px' }}
-                                            htmlFor="gojek"
-                                        >
-                                            <span
-                                                style={{
-                                                    color: '#ea8500',
-                                                    fontWeight: 'bold',
-                                                }}
-                                            >
-                                                GO_JEK
-                                            </span>{' '}
-                                            Giao hàng tiết kiệm
-                                        </label>
-                                    </div>
-                                </div>
+                                                <label
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        marginBottom: '8px',
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="deliveryMethod"
+                                                        value={option.value}
+                                                        checked={
+                                                            delivery ===
+                                                            option.value
+                                                        }
+                                                        onChange={
+                                                            handleDelivery
+                                                        }
+                                                        style={{
+                                                            marginRight: '10px',
+                                                        }}
+                                                    />
+                                                    <span
+                                                        style={{
+                                                            fontSize: '16px',
+                                                            fontWeight: '500',
+                                                            color: '#333',
+                                                        }}
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                color: option.color,
+                                                            }}
+                                                        >
+                                                            {
+                                                                option.label.split(
+                                                                    ' - ',
+                                                                )[0]
+                                                            }
+                                                        </span>{' '}
+                                                        -{' '}
+                                                        {
+                                                            option.label.split(
+                                                                ' - ',
+                                                            )[1]
+                                                        }
+                                                    </span>
+                                                </label>
+                                                <div
+                                                    style={{
+                                                        fontSize: '14px',
+                                                        color: '#666',
+                                                        marginLeft: '24px',
+                                                    }}
+                                                >
+                                                    Thời gian dự kiến:{' '}
+                                                    {option.time}
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    ))}
+                                </Row>
                             </div>
 
-                            {/* Chọn phương thức thanh toán */}
+                            {/* Phương thức thanh toán */}
                             <div>
-                                <h3 style={{ marginBottom: '10px' }}>
-                                    Chọn phương thức thanh toán
-                                </h3>
-                                <div
+                                <h3
                                     style={{
-                                        padding: '20px',
-                                        backgroundColor: '#f0f8ff',
-                                        borderRadius: '5px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
+                                        marginBottom: '20px',
+                                        fontSize: '20px',
+                                        color: '#333',
+                                        fontWeight: '500',
+                                        borderBottom: '2px solid #1890ff',
+                                        paddingBottom: '8px',
+                                        display: 'inline-block',
                                     }}
-                                    onChange={handlePayment}
-                                    value={payment}
                                 >
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            value="later_money"
-                                            name="paymentMethod"
-                                            style={{
-                                                marginRight: '10px',
-                                                marginBottom: '20px',
-                                            }}
-                                        />
-                                        Thanh toán tiền mặt khi nhận hàng
-                                    </label>
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            value="paypal"
-                                            name="paymentMethod"
-                                            style={{
-                                                marginRight: '10px',
-                                            }}
-                                        />
-                                        Thanh toán tiền bằng paypal
-                                    </label>
-                                </div>
+                                    Phương Thức Thanh Toán
+                                </h3>
+                                <Row gutter={[16, 16]}>
+                                    {paymentOptions.map((option) => (
+                                        <Col span={8} key={option.value}>
+                                            <div
+                                                style={{
+                                                    border:
+                                                        payment === option.value
+                                                            ? '2px solid #1890ff'
+                                                            : '1px solid #d9d9d9',
+                                                    borderRadius: '8px',
+                                                    padding: '15px',
+                                                    backgroundColor:
+                                                        payment === option.value
+                                                            ? '#e6f7ff'
+                                                            : '#fff',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s',
+                                                }}
+                                                onMouseEnter={(e) =>
+                                                    (e.currentTarget.style.border =
+                                                        '2px solid #40a9ff')
+                                                }
+                                                onMouseLeave={(e) =>
+                                                    (e.currentTarget.style.border =
+                                                        payment === option.value
+                                                            ? '2px solid #1890ff'
+                                                            : '1px solid #d9d9d9')
+                                                }
+                                                onClick={() =>
+                                                    setPayment(option.value)
+                                                }
+                                            >
+                                                <label
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        marginBottom: '8px',
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="paymentMethod"
+                                                        value={option.value}
+                                                        checked={
+                                                            payment ===
+                                                            option.value
+                                                        }
+                                                        onChange={handlePayment}
+                                                        style={{
+                                                            marginRight: '10px',
+                                                        }}
+                                                    />
+                                                    <span
+                                                        style={{
+                                                            fontSize: '16px',
+                                                            fontWeight: '500',
+                                                            color: '#333',
+                                                        }}
+                                                    >
+                                                        {option.label}
+                                                    </span>
+                                                </label>
+                                                <div
+                                                    style={{
+                                                        fontSize: '13px',
+                                                        color: '#666',
+                                                        marginLeft: '24px',
+                                                        lineHeight: '1.4',
+                                                    }}
+                                                >
+                                                    {option.desc}
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    ))}
+                                </Row>
                             </div>
                         </div>
                     </Col>
@@ -321,7 +512,7 @@ const PaymentPage = () => {
                                         fontWeight: 'bold',
                                     }}
                                 >
-                                    {`${user?.address} ${user?.city}`}{' '}
+                                    {`${user?.address} `}{' '}
                                 </span>
                             </Row>
                             <Row
@@ -366,12 +557,23 @@ const PaymentPage = () => {
                             {payment === 'paypal' && sdkReady ? (
                                 <PayPalButton
                                     amount={Math.round(priceTotalMemo / 20000)}
-                                    // shippingPreference="NO_SHIPPING" // default is "GET_FROM_FILE"
                                     onSuccess={onSuccessPaypal}
-                                    onError={() => {
-                                        alert('Error');
-                                    }}
+                                    onError={() => alert('Error')}
                                 />
+                            ) : payment === 'vnpay' ? (
+                                <Button
+                                    type="primary"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: '#005BAC', // Màu xanh dương đậm của VNPay
+                                        borderColor: '#005BAC', // Đảm bảo viền khớp với màu nền
+                                        height: '40px',
+                                        color: '#fff', // Màu chữ trắng để nổi bật trên nền xanh
+                                    }}
+                                    onClick={handleVNPayPayment}
+                                >
+                                    Thanh toán bằng VNPay
+                                </Button>
                             ) : (
                                 <Button
                                     type="primary"

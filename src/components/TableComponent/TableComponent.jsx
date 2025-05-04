@@ -12,6 +12,7 @@ const TableComponent = (props) => {
         isLoading = false,
         columns = [],
         handleDeleteMany,
+        enableExport = true, // Thêm prop enableExport với giá trị mặc định là true
     } = props;
 
     const [rowSelectedKey, setRowSelectedKey] = useState([]);
@@ -27,20 +28,11 @@ const TableComponent = (props) => {
         onChange: (selectedRowKeys, selectedRows) => {
             setRowSelectedKey(selectedRowKeys);
         },
-        // getCheckboxProps: (record) => ({
-        //     disabled: record.name === 'Disabled User',
-        //     // Column configuration not to be checked
-        //     name: record.name,
-        // }),
     };
 
     const handleDeleteAll = () => {
         handleDeleteMany(rowSelectedKey);
     };
-
-    // const handleDeleteAllUser = () => {
-    //     handleDeleteUserMany(rowSelectedKey);
-    // };
 
     const handleCancelDelete = () => {
         setIsModalOpenDelete(false);
@@ -81,22 +73,24 @@ const TableComponent = (props) => {
                 </div>
             )}
 
-            <button
-                style={{
-                    backgroundColor: '#007784',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '10px 20px 10px 20px',
-                    borderRadius: '6px',
-                    position: 'absolute',
-                    top: '142px',
-                    left: '585px',
-                    cursor: 'pointer',
-                }}
-                onClick={() => setIsModalOpenDelete(true)}
-            >
-                Export File
-            </button>
+            {enableExport && (
+                <button
+                    style={{
+                        backgroundColor: '#007784',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '10px 20px 10px 20px',
+                        borderRadius: '6px',
+                        position: 'absolute',
+                        top: '4px',
+                        left: '320px',
+                        cursor: 'pointer',
+                    }}
+                    onClick={() => setIsModalOpenDelete(true)}
+                >
+                    Export File
+                </button>
+            )}
 
             <Table
                 rowSelection={{
@@ -107,69 +101,40 @@ const TableComponent = (props) => {
                 dataSource={dataSource}
                 {...props}
             />
-            {/* <ModalComponent
-                title="Xóa sản phẩm"
-                open={isModalOpenDelete}
-                style={{ top: '50px' }}
-                onOk={handleDeleteAllProduct}
-                footer={[
-                    <Button
-                        key="cancel"
-                        onClick={handleCancelDelete}
-                        style={{
-                            borderColor: '#76b8bf',
-                            color: '#000',
-                        }}
-                    >
-                        Hủy
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        style={{
-                            backgroundColor: '#76b8bf', // Màu nền của nút OK
-                            borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
-                        }}
-                        onClick={handleDeleteAllProduct} // Hàm xử lý khi nhấn nút OK
-                    >
-                        OK
-                    </Button>,
-                ]}
-            >
-                <div>Bạn có chắc chắn xóa tất cả sản phẩm này không?</div>
-            </ModalComponent> */}
 
-            <ModalComponent
-                title="Xuất file"
-                onCancel={handleCancelDelete}
-                open={isModalOpenDelete}
-                style={{ top: '50px' }}
-                footer={[
-                    <Button
-                        key="cancel"
-                        onClick={handleCancelDelete}
-                        style={{
-                            borderColor: '#76b8bf',
-                            color: '#000',
-                        }}
-                    >
-                        Hủy
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        style={{
-                            backgroundColor: '#76b8bf', // Màu nền của nút OK
-                            borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
-                        }}
-                        onClick={exportExcel} // Hàm xử lý khi nhấn nút OK
-                    >
-                        OK
-                    </Button>,
-                ]}
-            >
-                <div>Bạn có muốn xuất file này không ?</div>
-            </ModalComponent>
+            {enableExport && (
+                <ModalComponent
+                    title="Xuất file"
+                    onCancel={handleCancelDelete}
+                    open={isModalOpenDelete}
+                    style={{ top: '50px' }}
+                    footer={[
+                        <Button
+                            key="cancel"
+                            onClick={handleCancelDelete}
+                            style={{
+                                borderColor: '#76b8bf',
+                                color: '#000',
+                            }}
+                        >
+                            Hủy
+                        </Button>,
+                        <Button
+                            key="submit"
+                            type="primary"
+                            style={{
+                                backgroundColor: '#76b8bf',
+                                borderColor: '#76b8bf',
+                            }}
+                            onClick={exportExcel}
+                        >
+                            OK
+                        </Button>,
+                    ]}
+                >
+                    <div>Bạn có muốn xuất file này không ?</div>
+                </ModalComponent>
+            )}
         </div>
     );
 };

@@ -1,0 +1,313 @@
+.wishlistContainer {
+    max-width: 1400px;
+    min-height: 80vh;
+    margin: 30px auto;
+    padding: 30px;
+    background: linear-gradient(135deg, #ffffff, #f5f7fa); // Gradient nền nhẹ
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.wishlistHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    background-color: #fff;
+    color: #000;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #000;
+        margin: 0;
+        display: flex;
+        align-items: center;
+
+        .heartIcon {
+            color: red;
+            margin-right: 15px;
+            font-size: 32px;
+            animation: pulse 1.5s infinite;
+        }
+    }
+
+    .itemCount {
+        font-size: 16px;
+        font-weight: 500;
+        color: #fff;
+        background-color: #007784;
+        padding: 5px 15px;
+        border-radius: 20px;
+    }
+}
+
+.wishlistGrid {
+    margin-top: 20px;
+}
+
+.productCard {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeIn 0.5s ease-in-out;
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+}
+
+.imageContainer {
+    position: relative;
+    height: 220px;
+    background: #f5f7fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.productImage {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    padding: 20px;
+    transition: transform 0.3s ease;
+
+    .productCard:hover & {
+        transform: scale(1.05);
+    }
+}
+
+.productName {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.priceContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+
+    .currentPrice {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e74c3c; // Màu đỏ cho giá hiện tại
+    }
+
+    .originalPrice {
+        font-size: 14px;
+        color: #999;
+        text-decoration: line-through;
+    }
+}
+
+.discountTag {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(
+        135deg,
+        #ff6f61,
+        #ff8c7a
+    ); // Gradient cho tag discount
+    border: none;
+    border-radius: 12px;
+    padding: 4px 10px;
+    display: inline-block;
+}
+
+.actionIcon {
+    font-size: 18px;
+    color: #007784; // Màu xanh cho icon
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #ff6f61; // Màu cam khi hover
+    }
+
+    &[aria-label='delete'] {
+        color: #e74c3c; // Màu đỏ cho icon xóa
+    }
+
+    &[aria-label='delete']:hover {
+        color: #c0392b;
+    }
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    animation: fadeIn 0.5s ease-in-out;
+
+    .emptyText {
+        font-size: 18px;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 20px;
+    }
+}
+
+.shopNowButton {
+    background: linear-gradient(135deg, #007784, #00a1b5); // Gradient cho nút
+    border: none;
+    border-radius: 20px;
+    padding: 10px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: linear-gradient(135deg, #00a1b5, #007784);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+}
+
+// Hiệu ứng fade-in
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Hiệu ứng pulse cho icon trái tim
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .wishlistContainer {
+        padding: 20px;
+        margin: 20px;
+    }
+
+    .wishlistHeader {
+        h1 {
+            font-size: 24px;
+            color: #000;
+
+            .heartIcon {
+                font-size: 28px;
+            }
+        }
+
+        .itemCount {
+            font-size: 14px;
+            padding: 4px 12px;
+        }
+    }
+
+    .productCard {
+        .imageContainer {
+            height: 180px;
+        }
+
+        .productName {
+            font-size: 14px;
+        }
+
+        .priceContainer {
+            .currentPrice {
+                font-size: 16px;
+            }
+
+            .originalPrice {
+                font-size: 12px;
+            }
+        }
+
+        .discountTag {
+            font-size: 10px;
+            padding: 3px 8px;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .wishlistContainer {
+        padding: 15px;
+        margin: 15px;
+    }
+
+    .wishlistHeader {
+        flex-direction: column;
+        gap: 10px;
+
+        h1 {
+            font-size: 20px;
+
+            .heartIcon {
+                font-size: 24px;
+            }
+        }
+
+        .itemCount {
+            font-size: 12px;
+            padding: 3px 10px;
+        }
+    }
+
+    .productCard {
+        .imageContainer {
+            height: 150px;
+        }
+
+        .productName {
+            font-size: 12px;
+        }
+
+        .priceContainer {
+            .currentPrice {
+                font-size: 14px;
+            }
+
+            .originalPrice {
+                font-size: 10px;
+            }
+        }
+
+        .discountTag {
+            font-size: 9px;
+            padding: 2px 6px;
+        }
+    }
+
+    .shopNowButton {
+        padding: 8px 20px;
+        font-size: 14px;
+    }
+}

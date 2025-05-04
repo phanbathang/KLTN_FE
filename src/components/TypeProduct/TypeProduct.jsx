@@ -19,6 +19,8 @@ const TypeProduct = ({ name }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '20px',
+                fontSize: '14px',
+                fontWeight: 'bold',
             }}
             onClick={() => handleNavigatetype(name)}
         >

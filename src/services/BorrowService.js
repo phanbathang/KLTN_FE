@@ -12,51 +12,38 @@ export const getAllBorrows = async (access_token) => {
     return res.data;
 };
 
-export const createBorrow = async (data, access_token) => {
+export const createBorrow = async (data) => {
     const res = await axios.post(
         `${process.env.REACT_APP_API_URL}/borrow/createBorrow`,
         data,
-        {
-            headers: {
-                token: `Bearer ${access_token}`,
-            },
-        },
     );
     return res.data;
 };
 
-export const getAllBorrowDetail = async (id, access_token) => {
+export const getAllBorrowDetail = async (id) => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL}/borrow/getAllBorrowDetail/${id}`,
-        {
-            headers: {
-                token: `Bearer ${access_token}`,
-            },
-        },
     );
     return res.data;
 };
 
-export const getBorrowDetail = async (id, access_token) => {
+export const getBorrowDetail = async (id) => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL}/borrow/getBorrowDetail/${id}`,
-        {
-            headers: {
-                token: `Bearer ${access_token}`,
-            },
-        },
     );
     return res.data;
 };
 
-export const returnBorrow = async (id, access_token) => {
+export const returnBorrow = async (id) => {
     const res = await axios.delete(
         `${process.env.REACT_APP_API_URL}/borrow/returnBorrow/${id}`,
-        {
-            headers: {
-                token: `Bearer ${access_token}`,
-            },
-        },
+    );
+    return res.data;
+};
+
+export const returnBorrowItem = async (borrowId, itemId) => {
+    const res = await axios.put(
+        `${process.env.REACT_APP_API_URL}/borrow/returnBorrowItem/${borrowId}/${itemId}`,
     );
     return res.data;
 };
@@ -69,6 +56,13 @@ export const getDeletedBorrows = async (access_token) => {
                 token: `Bearer ${access_token}`,
             },
         },
+    );
+    return res.data;
+};
+
+export const deleteCanceledBorrow = async (id) => {
+    const res = await axios.delete(
+        `${process.env.REACT_APP_API_URL}/borrow/deleteCanceledBorrow/${id}`,
     );
     return res.data;
 };

@@ -13,9 +13,11 @@ import PaymentPage from '../pages/PaymentPage/PaymentPage';
 import ProductDetailPage from '../pages/ProductDetailPage/ProductDetailPage';
 import ProductsPage from '../pages/ProductsPage/ProductsPage';
 import ProfileUser from '../pages/ProfileUser/ProfileUser';
+import RulePage from '../pages/RulePage/RulePage';
 import SignInPage from '../pages/SignInPage/SignInPage';
 import SignUpPage from '../pages/SignUpPage/SignUpPage';
 import TypeProductPage from '../pages/TypeProductPage/TypeProductPage';
+import WishListPage from '../pages/WishListPage/WishListPage';
 
 export const routes = [
     {
@@ -33,6 +35,18 @@ export const routes = [
     {
         path: '/borrow',
         page: BorrowPage,
+        isShowHeader: true,
+    },
+
+    {
+        path: '/wishlist',
+        page: WishListPage,
+        isShowHeader: true,
+    },
+
+    {
+        path: '/rule',
+        page: RulePage,
         isShowHeader: true,
     },
 

@@ -1,94 +1,147 @@
-.WrapperContainer {
-    display: flex;
-    margin-top: 40px;
-    border: 1px solid rgb(51, 51, 51);
-    padding: 40px 0px 30px;
-    border-radius: 20px;
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Arial', sans-serif;
 }
 
-.WrapperSection {
-    display: flex;
-    align-items: baseline;
-    margin-bottom: 15px;
-}
-
-.WrapperSection span {
-    width: 150px;
-    font-size: 1.7rem;
+.title {
+    font-size: 28px;
     font-weight: 600;
-}
-
-.WrapperInput {
-    flex: 1;
-    height: 50px;
-    margin-left: 10px;
-    width: 300px;
-}
-
-.WrapperButton {
-    margin-left: 20px;
-    width: 130px;
-    height: 50px;
-    color: #fff;
-    background-color: #76b8bf;
-    &:hover {
-        background-color: #76b8bf !important;
-        border-color: #76b8bf !important;
-        color: rgb(255, 255, 255) !important;
-        box-shadow: none !important;
-    }
-}
-
-.WrapperPicture {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-right: 80px;
-    margin-top: 80px;
-
-    & .ant-upload-list-item-container {
-        display: none;
-    }
-}
-
-.WrapperPicture img {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
+    color: #333;
+    text-align: center;
     margin-bottom: 10px;
 }
 
-.WrapperPicture button {
-    background-color: #76b8bf;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-top: 20px;
+.subtitle {
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
 }
 
-.WrapperPicture button:hover {
-    background-color: #76b8bf;
+.profileCard {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    padding: 30px;
+    gap: 40px;
 }
 
-.WrapperSelect {
-    // background-color: #76b8bf;
-    // color: #fff;
-    // border: none;
-    // padding: 5px 10px;
-    // cursor: pointer;
-    // border-radius: 4px;
-    // margin-top: 10px;
-    background-color: #76b8bf;
-    color: #fff;
-    border: none;
+.formSection {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-    &:hover,
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    transition: border-color 0.2s ease;
+
     &:focus {
-        background-color: #76b8bf !important;
-        border-color: #76b8bf !important;
-        color: #fff !important;
-        box-shadow: none !important;
+        border-color: #1890ff;
+        outline: none;
+    }
+}
+
+.updateButton {
+    height: 40px;
+    border: none;
+    background-color: #007784;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.avatarSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.avatarWrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #e8e8e8;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatarPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 14px;
+    text-align: center;
+}
+
+.uploadButton {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #1890ff;
+    border: 1px solid #1890ff;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+        background-color: #1890ff;
+        color: #fff;
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .profileCard {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .formSection {
+        width: 100%;
+    }
+
+    .avatarSection {
+        width: 100%;
+        align-items: center;
     }
 }

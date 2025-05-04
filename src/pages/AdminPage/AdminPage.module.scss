@@ -1,18 +1,131 @@
-// .adminmenu .ant-menu-item-selected {
-//     background-color: #76b8bf !important;
-//     color: white !important;
-// }
+.adminContainer {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f7fa;
+}
 
-// .adminmenu .ant-menu-item:hover {
-//     background-color: #76b8bf !important;
-//     color: white !important;
-// }
+.sidebar {
+    width: 250px;
+    background: #2c3e50;
+    color: #ffffff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 
-// /* Tùy chỉnh màu viền của menu khi mục được chọn */
-// .adminmenu .ant-menu-item-selected .ant-menu-item-icon {
-//     color: white !important;
-// }
+    .sidebarMenu {
+        background: transparent !important;
 
-// .adminmenu .ant-menu-item:hover .ant-menu-item-icon {
-//     color: white !important;
-// }
+        :global {
+            .ant-menu-item,
+            .ant-menu-submenu-title {
+                color: #ecf0f1 !important;
+                transition: all 0.3s;
+            }
+
+            .ant-menu-item:hover,
+            .ant-menu-submenu-title:hover {
+                background: #34495e !important;
+                color: #ffffff !important;
+            }
+
+            .ant-menu-item-selected {
+                background: #007784 !important;
+                color: #ffffff !important;
+            }
+
+            .ant-menu-submenu-open > .ant-menu-submenu-title {
+                background: #34495e !important;
+            }
+        }
+    }
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+}
+
+.dashboardContainer {
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dashboardTitle {
+    color: #2c3e50;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.statsRow {
+    margin-bottom: 20px !important;
+
+    .statCard {
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+
+        &:hover {
+            transform: translateY(-5px);
+        }
+
+        .ant-statistic-title {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .ant-statistic-content {
+            font-size: 24px;
+            font-weight: bold;
+        }
+    }
+}
+
+.chartRow {
+    .chartCard {
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .ant-card-head {
+            background: #f5f7fa;
+            border-bottom: none;
+
+            .ant-card-head-title {
+                color: #2c3e50;
+                font-weight: 600;
+            }
+        }
+    }
+}
+
+.customTooltip {
+    background-color: #ffffff;
+    padding: 10px;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    p {
+        margin: 0;
+        color: #2c3e50;
+
+        &:first-child {
+            font-weight: bold;
+        }
+    }
+}
+
+.placeholder {
+    text-align: center;
+    padding: 50px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    h2 {
+        color: #2c3e50;
+    }
+
+    p {
+        color: #7f8c8d;
+    }
+}

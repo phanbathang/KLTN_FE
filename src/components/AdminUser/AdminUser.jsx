@@ -15,6 +15,7 @@ import { Bounce, toast } from 'react-toastify';
 import { getBase64 } from '../../ultils.js';
 import DrawerComponent from '../DrawerComponent/DrawerComponent.jsx';
 import ModalComponent from '../ModalComponent/ModalComponent.jsx';
+import Loading from '../LoadingComponent/Loading.jsx';
 
 const AdminUser = () => {
     const dispatch = useDispatch();
@@ -176,7 +177,7 @@ const AdminUser = () => {
         queryFn: UserService.getAllUser,
     });
 
-    const { isLoading: isLoadingProduct, data: users } = queryUser;
+    const { isLoading: isLoadingUser, isFetching, data: users } = queryUser;
 
     const renderAction = () => {
         return (
@@ -441,214 +442,216 @@ const AdminUser = () => {
         );
     };
     return (
-        <div>
-            <h1 className={styles.WrapperHeader}>Quản lý người dùng</h1>
-            <div style={{ marginTop: '20px' }}>
-                <TableComponent
-                    style={{ position: 'relative' }}
-                    handleDeleteMany={handleDeleteUserMany}
-                    columns={columns}
-                    data={dataTable}
-                    onRow={(record, rowIndex) => {
-                        return {
-                            onClick: (event) => {
-                                setRowSelected(record._id);
-                            },
-                        };
-                    }}
-                />
-            </div>
-            <DrawerComponent
-                title="Chi tiết người dùng"
-                isOpen={isOpenDrawer}
-                onClose={closeDrawer}
-                width="50%"
-            >
-                <Form
-                    name="basic"
-                    labelCol={{ span: 6 }}
-                    wrapperCol={{ span: 16 }}
-                    style={{
-                        maxWidth: 600,
-                        marginTop: '30px',
-                        marginRight: '20%',
-                    }}
-                    initialValues={{ remember: true }}
-                    onFinish={onUpdateUser}
-                    autoComplete="on"
-                    form={form}
+        <Loading isLoading={isLoadingUser || isFetching} size="small">
+            <div>
+                <h1 className={styles.WrapperHeader}>Quản lý người dùng</h1>
+                <div style={{ marginTop: '20px' }}>
+                    <TableComponent
+                        style={{ position: 'relative' }}
+                        handleDeleteMany={handleDeleteUserMany}
+                        columns={columns}
+                        data={dataTable}
+                        onRow={(record, rowIndex) => {
+                            return {
+                                onClick: (event) => {
+                                    setRowSelected(record._id);
+                                },
+                            };
+                        }}
+                    />
+                </div>
+                <DrawerComponent
+                    title="Chi tiết người dùng"
+                    isOpen={isOpenDrawer}
+                    onClose={closeDrawer}
+                    width="50%"
                 >
-                    <Form.Item
-                        label="Name"
-                        name="name"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input your name!',
-                            },
-                        ]}
+                    <Form
+                        name="basic"
+                        labelCol={{ span: 6 }}
+                        wrapperCol={{ span: 16 }}
+                        style={{
+                            maxWidth: 600,
+                            marginTop: '30px',
+                            marginRight: '20%',
+                        }}
+                        initialValues={{ remember: true }}
+                        onFinish={onUpdateUser}
+                        autoComplete="on"
+                        form={form}
                     >
-                        <Input
-                            value={stateUserDetail.name}
-                            onChange={handleOnchangeDetail}
+                        <Form.Item
+                            label="Name"
                             name="name"
-                            className={styles.WrapperInput}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Email"
-                        name="email"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input your email!',
-                            },
-                        ]}
-                    >
-                        <Input
-                            value={stateUserDetail.email}
-                            onChange={handleOnchangeDetail}
-                            name="email"
-                            className={styles.WrapperInput}
-                        />
-                    </Form.Item>
-                    <Form.Item
-                        label="isAdmin"
-                        name="isAdmin"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input your admin!',
-                            },
-                        ]}
-                    >
-                        <Input
-                            value={stateUserDetail.isAdmin}
-                            onChange={handleOnchangeDetail}
-                            name="isAdmin"
-                            className={styles.WrapperInput}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Phone"
-                        name="phone"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input your phone!',
-                            },
-                        ]}
-                    >
-                        <Input
-                            value={stateUserDetail.phone}
-                            onChange={handleOnchangeDetail}
-                            name="phone"
-                            className={styles.WrapperInput}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Address"
-                        name="address"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input your address!',
-                            },
-                        ]}
-                    >
-                        <Input
-                            value={stateUserDetail.address}
-                            onChange={handleOnchangeDetail}
-                            name="address"
-                            className={styles.WrapperInput}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Avatar"
-                        name="avatar"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Please input your avatar!',
-                            },
-                        ]}
-                    >
-                        <Upload
-                            onChange={handleOnchangeAvatarDetail}
-                            showUploadList={false}
-                            maxCount={1}
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your name!',
+                                },
+                            ]}
                         >
-                            <Button className={styles.WrapperSelect}>
-                                Upload png only
-                            </Button>
-                            {stateUserDetail?.avatar && (
-                                <img
-                                    src={stateUserDetail?.avatar}
-                                    style={{
-                                        height: '55px',
-                                        width: '55px',
-                                        borderRadius: '50%',
-                                        objectFit: 'cover',
-                                    }}
-                                    alt="avatar"
-                                />
-                            )}
-                        </Upload>
-                    </Form.Item>
+                            <Input
+                                value={stateUserDetail.name}
+                                onChange={handleOnchangeDetail}
+                                name="name"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
 
-                    <Form.Item label={null}>
+                        <Form.Item
+                            label="Email"
+                            name="email"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your email!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateUserDetail.email}
+                                onChange={handleOnchangeDetail}
+                                name="email"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
+                        <Form.Item
+                            label="isAdmin"
+                            name="isAdmin"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your admin!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateUserDetail.isAdmin}
+                                onChange={handleOnchangeDetail}
+                                name="isAdmin"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Phone"
+                            name="phone"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your phone!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateUserDetail.phone}
+                                onChange={handleOnchangeDetail}
+                                name="phone"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Address"
+                            name="address"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your address!',
+                                },
+                            ]}
+                        >
+                            <Input
+                                value={stateUserDetail.address}
+                                onChange={handleOnchangeDetail}
+                                name="address"
+                                className={styles.WrapperInput}
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Avatar"
+                            name="avatar"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input your avatar!',
+                                },
+                            ]}
+                        >
+                            <Upload
+                                onChange={handleOnchangeAvatarDetail}
+                                showUploadList={false}
+                                maxCount={1}
+                            >
+                                <Button className={styles.WrapperSelect}>
+                                    Upload png only
+                                </Button>
+                                {stateUserDetail?.avatar && (
+                                    <img
+                                        src={stateUserDetail?.avatar}
+                                        style={{
+                                            height: '55px',
+                                            width: '55px',
+                                            borderRadius: '50%',
+                                            objectFit: 'cover',
+                                        }}
+                                        alt="avatar"
+                                    />
+                                )}
+                            </Upload>
+                        </Form.Item>
+
+                        <Form.Item label={null}>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                style={{
+                                    left: '100%',
+                                    marginTop: '20px',
+                                    padding: '25px 15px 25px 15px',
+                                    backgroundColor: '#76b8bf',
+                                }}
+                            >
+                                Chỉnh sửa người dùng
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                </DrawerComponent>
+                <ModalComponent
+                    title="Xóa người dùng"
+                    open={isModalOpenDelete}
+                    onCancel={handleCancelDelete}
+                    style={{ top: '50px' }}
+                    // onOk={handleDeleteUser}
+                    footer={[
                         <Button
-                            type="primary"
-                            htmlType="submit"
+                            key="cancel"
+                            onClick={handleCancelDelete}
                             style={{
-                                left: '100%',
-                                marginTop: '20px',
-                                padding: '25px 15px 25px 15px',
-                                backgroundColor: '#76b8bf',
+                                borderColor: '#76b8bf',
+                                color: '#000',
                             }}
                         >
-                            Chỉnh sửa người dùng
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </DrawerComponent>
-            <ModalComponent
-                title="Xóa người dùng"
-                open={isModalOpenDelete}
-                onCancel={handleCancelDelete}
-                style={{ top: '50px' }}
-                // onOk={handleDeleteUser}
-                footer={[
-                    <Button
-                        key="cancel"
-                        onClick={handleCancelDelete}
-                        style={{
-                            borderColor: '#76b8bf',
-                            color: '#000',
-                        }}
-                    >
-                        Hủy
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        style={{
-                            backgroundColor: '#76b8bf', // Màu nền của nút OK
-                            borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
-                        }}
-                        onClick={handleDeleteUser} // Hàm xử lý khi nhấn nút OK
-                    >
-                        OK
-                    </Button>,
-                ]}
-            >
-                <div>Bạn có chắc chắn xóa người dùng này không?</div>
-            </ModalComponent>
-        </div>
+                            Hủy
+                        </Button>,
+                        <Button
+                            key="submit"
+                            type="primary"
+                            style={{
+                                backgroundColor: '#76b8bf', // Màu nền của nút OK
+                                borderColor: '#76b8bf', // Đảm bảo viền có màu giống nền
+                            }}
+                            onClick={handleDeleteUser} // Hàm xử lý khi nhấn nút OK
+                        >
+                            OK
+                        </Button>,
+                    ]}
+                >
+                    <div>Bạn có chắc chắn xóa người dùng này không?</div>
+                </ModalComponent>
+            </div>
+        </Loading>
     );
 };
 

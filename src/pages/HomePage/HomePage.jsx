@@ -19,8 +19,9 @@ const HomePage = () => {
     const searchProduct = useSelector((state) => state.product?.search);
     const searchDebounce = useDebounceHook(searchProduct, 1000);
     const [isSetLoading, setIsSetLoading] = useState(false);
-    const [limit, setLimit] = useState(15);
+    const [limit, setLimit] = useState(12);
     const [typeProduct, setTypeProduct] = useState([]);
+
     const fetchProductAll = async (context) => {
         const limit = context?.queryKey && context?.queryKey[1];
         const search = context?.queryKey && context?.queryKey[2];
@@ -61,24 +62,27 @@ const HomePage = () => {
             return () => clearTimeout(timer);
         }
     }, [isLoading]);
+
     return (
         <Loading isLoading={isLoading || isSetLoading}>
-            <div
-                style={{
-                    padding: '20px 120px 30px 120px',
-                    backgroundColor: '#f0f0f0',
-                }}
-            >
-                {/* <div className={styles.wrapperTypeProduct}>
-                    {typeProduct.map((item) => {
-                        return <TypeProduct name={item} key={item} />;
-                    })}
-                </div> */}
+            <div className={styles.homePageContainer}>
+                {/* Banner (Slider) */}
+                <div className={styles.sliderContainer}>
+                    <SliderComponents arrImage={[slide4, slide7, slide6]} />
+                </div>
 
-                <SliderComponents arrImage={[slide4, slide7, slide6]} />
-                <div className={styles.WrapperProducts}>
-                    {products?.data?.map((product) => {
-                        return (
+                {/* Danh mục sản phẩm */}
+                <div className={styles.wrapperTypeProduct}>
+                    {typeProduct.map((item) => (
+                        <TypeProduct name={item} key={item} />
+                    ))}
+                </div>
+
+                {/* Danh sách sản phẩm */}
+                <div className={styles.productsSection}>
+                    <h2 className={styles.sectionTitle}>Sản phẩm nổi bật</h2>
+                    <div className={styles.wrapperProducts}>
+                        {products?.data?.map((product) => (
                             <CardComponent
                                 key={product._id}
                                 countInStock={product.countInStock}
@@ -92,27 +96,32 @@ const HomePage = () => {
                                 selled={product.selled}
                                 id={product._id}
                             />
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
-                <div
-                    style={{
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginTop: '10px',
-                    }}
-                >
+
+                {/* Nút Xem thêm */}
+                <div className={styles.buttonContainer}>
                     <ButtonComponents
                         textButton="Xem thêm"
                         type="outline"
-                        className={styles.WrapperButton}
-                        onClick={() => setLimit((prev) => prev + 5)}
+                        className={styles.wrapperButton}
+                        onClick={() => setLimit((prev) => prev + 4)}
                     />
                 </div>
+
+                {/* Hình ảnh quảng cáo */}
+                <div className={styles.adImageContainer}>
+                    <img
+                        src={slide5}
+                        className={styles.wrapperImg}
+                        alt="Advertisement"
+                    />
+                </div>
+
+                {/* Footer */}
+                <FooterComponent />
             </div>
-            <img src={slide5} className={styles.WrapperImg} />
-            <FooterComponent />
         </Loading>
     );
 };

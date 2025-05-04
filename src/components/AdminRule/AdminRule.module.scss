@@ -1,0 +1,29 @@
+.WrapperHeader {
+    color: #000;
+    font-size: 30px;
+}
+
+.WrapperAddRule {
+    height: 50px;
+    width: 150px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border-style: dotted;
+    color: #fff;
+    background-color: #76b8bf;
+
+    &:hover,
+    &:focus {
+        background-color: #76b8bf !important;
+        border-color: #76b8bf !important;
+        color: #fff !important;
+        box-shadow: none !important;
+    }
+}
+
+.WrapperInput {
+    width: 100%;
+    white-space: pre-wrap; /* Cho phép xuống dòng */
+    resize: vertical; /* Cho phép thay đổi kích thước dọc */
+}

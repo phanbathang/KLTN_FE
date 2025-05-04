@@ -1,11 +1,12 @@
 export const orderContent = {
     delivery: {
-        fast: 'FAST',
-        gojek: 'GO_JEK',
+        fast: 'FAST - Giao Hàng Tiết Kiệm',
+        gojek: 'GOJEK - Giao Hàng Nhanh',
     },
 
     payment: {
         later_money: 'Thanh toán tiền mặt khi nhận hàng',
-        paypal: 'Thanh toán bằng Paypal',
+        paypal: 'Thanh toán bằng PayPal',
+        vnpay: 'Thanh toán bằng VNPay',
     },
 };

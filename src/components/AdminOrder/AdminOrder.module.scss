@@ -22,17 +22,25 @@
 }
 
 .WrapperDate {
-    margin-top: 100px;
     display: flex;
     justify-content: end;
     align-items: center;
+    margin-right: 25px;
 }
 
 .WrapperTotal {
     font-size: 16px;
-    font-weight: bold;
     margin-bottom: 20px;
     text-align: center;
-    background-color: #cfedef;
     padding: 25px;
+}
+
+.WrapperSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }

@@ -1,13 +1,15 @@
 .Wrapper {
     padding: 20px 200px 20px 200px;
     background-color: rgb(240, 240, 240);
-    height: auto;
-    min-height: 100vh;
+
     h2 {
         margin-bottom: 30px;
         font-size: 24px;
         color: #333;
     }
+
+    height: auto;
+    min-height: 100vh;
 }
 
 .OrderDetails {
@@ -29,6 +31,36 @@
             padding: 15px;
             border: 1px solid #999999;
             border-radius: 8px;
+            width: 287px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+
+            p {
+                margin: 5px 0;
+                font-size: 14px;
+                color: #555;
+            }
+
+            .Warning {
+                color: orange;
+                font-weight: bold;
+            }
+        }
+    }
+
+    .SectionDate {
+        flex: 1;
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .Box {
+            background-color: #fff;
+            padding: 15px;
+            border: 1px solid #999999;
+            border-radius: 8px;
+            width: 161px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 
             p {
@@ -46,47 +78,88 @@
 }
 
 .ProductDetails {
+    margin-top: 20px;
+
     table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
 
-        th,
+    th,
+    td {
+        padding: 12px 15px;
+        text-align: center;
+        font-size: 14px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    th {
+        background: #f0f0f0;
+        color: #555;
+        font-weight: 600;
+    }
+
+    tr {
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: #fafafa;
+        }
+    }
+
+    .Product {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        text-align: left;
+
+        img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        span {
+            font-size: 15px;
+            color: #333;
+        }
+    }
+
+    .totalRow {
+        font-weight: 600;
+        background: #fff;
+    }
+
+    .Total {
+        color: #ff4d4f;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    tfoot {
         td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
+            background: #fff;
+            font-weight: 500;
+            color: #333;
         }
+    }
+}
 
-        th {
-            background-color: #f3f3f3;
-            font-size: 14px;
-            color: #555;
-        }
+// Responsive
+@media (max-width: 768px) {
+    table {
+        font-size: 12px;
+    }
 
-        td {
-            font-size: 14px;
-        }
-
-        .Product {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            img {
-                width: 80px;
-                height: 100px;
-                object-fit: cover;
-                border-radius: 4px;
-            }
-
-            span {
-                font-size: 15px;
-            }
-        }
-
-        .Total {
-            color: red;
-            font-weight: bold;
+    .Product {
+        img {
+            width: 40px;
+            height: 40px;
         }
     }
 }

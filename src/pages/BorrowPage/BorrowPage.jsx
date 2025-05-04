@@ -30,7 +30,6 @@ const BorrowPage = () => {
     const borrow = useSelector((state) => state.borrow);
     const user = useSelector((state) => state.user);
     const dispatch = useDispatch();
-
     const navigate = useNavigate();
     const [form] = Form.useForm();
 
@@ -106,27 +105,6 @@ const BorrowPage = () => {
         return `${day}-${month}-${year}`;
     };
 
-    const borrowDateRange = useMemo(() => {
-        if (!borrow?.borrowItemSelected?.length)
-            return { start: 'Chưa chọn', end: 'Chưa chọn' };
-
-        let borrowDates = borrow.borrowItemSelected.map((item) =>
-            new Date(item.borrowDate).getTime(),
-        );
-        let returnDates = borrow.borrowItemSelected.map((item) =>
-            new Date(item.returnDate).getTime(),
-        );
-
-        return {
-            start: borrowDates.length
-                ? formatDate(Math.min(...borrowDates))
-                : 'Chưa chọn',
-            end: returnDates.length
-                ? formatDate(Math.max(...returnDates))
-                : 'Chưa chọn',
-        };
-    }, [borrow.borrowItemSelected]);
-
     const handleAddCard = () => {
         if (!user?.access_token) {
             toast.error('Bạn cần đăng nhập để thuê sách.', {
@@ -145,75 +123,91 @@ const BorrowPage = () => {
         if (!user?.name || !user?.address || !user?.phone) {
             toast.error(
                 'Vui lòng cập nhật đầy đủ thông tin cá nhân trước khi thuê.',
-                { style: { fontSize: '1.5rem' } },
+                {
+                    style: { fontSize: '1.5rem' },
+                },
             );
             return;
         }
 
-        setIsLoading(true); // Bật trạng thái loading khi bắt đầu đặt thuê
-
-        mutationAddBorrow.mutate(
-            {
-                access_token: user?.access_token,
-                borrowItems: borrow?.borrowItemSelected,
-                borrowAddress: {
-                    fullName: user?.name,
-                    phone: user?.phone,
-                    address: user?.address,
+        const borrowDuration = borrow?.borrowItemSelected[0]?.borrowDuration;
+        if (!borrowDuration || borrowDuration < 1 || borrowDuration > 30) {
+            toast.error(
+                'Thời gian mượn không hợp lệ. Vui lòng chọn từ 1 đến 30 ngày.',
+                {
+                    style: { fontSize: '1.5rem' },
                 },
-                borrowDate: new Date(
-                    borrowDateRange.start.split('-').reverse().join('-'),
-                ),
-                returnDate: new Date(
-                    borrowDateRange.end.split('-').reverse().join('-'),
-                ),
-                totalPrice: priceTotalMemo,
+            );
+            return;
+        }
 
-                userId: user?.id,
-                email: user?.email,
+        const borrowData = {
+            access_token: user?.access_token,
+            borrowItems: borrow?.borrowItemSelected,
+            borrowAddress: {
+                fullName: user?.name,
+                phone: String(user?.phone),
+                address: user?.address,
             },
-            {
-                onSuccess: (data) => {
-                    if (data?.status === 'OK') {
-                        localStorage.removeItem('cartBook_' + user?.id);
-                        dispatch(removeAllBorrowProduct({ listChecked }));
-                        toast.success(
-                            'Thuê thành công. Hãy đến cửa hàng sớm nhất có thể nhé !',
-                            {
-                                style: { fontSize: '1.5rem' },
-                            },
-                        );
+            borrowDate: new Date().toISOString().split('T')[0],
+            borrowDuration,
+            totalPrice: priceTotalMemo,
+            userId: user?.id,
+            email: user?.email,
+        };
 
-                        console.log('Navigating to BorrowSuccess with data:', {
-                            borrows: borrow?.borrowItemSelected,
-                            borrowDate: borrow?.borrowDate,
-                            returnDate: borrow?.returnDate,
-                        });
+        // Tính returnDate dựa trên borrowDate và borrowDuration
+        const parsedBorrowDate = new Date(borrowData.borrowDate);
+        const returnDate = new Date(parsedBorrowDate);
+        returnDate.setDate(parsedBorrowDate.getDate() + borrowDuration);
 
-                        navigate('/borrowSuccess', {
-                            state: {
-                                borrows: borrow?.borrowItemSelected,
-                                borrowDateRange,
-                                priceTotalMemo: priceTotalMemo,
-                            },
-                        });
-                    } else {
-                        toast.error('Đặt thuê thất bại. Vui lòng thử lại.', {
+        setIsLoading(true);
+
+        mutationAddBorrow.mutate(borrowData, {
+            onSuccess: (data) => {
+                if (data?.status === 'OK') {
+                    localStorage.removeItem('cartBook_' + user?.id);
+                    dispatch(removeAllBorrowProduct({ listChecked }));
+                    toast.success(
+                        'Thuê thành công. Hãy đến cửa hàng sớm nhất có thể nhé !',
+                        {
                             style: { fontSize: '1.5rem' },
-                        });
-                    }
-                },
-                onError: (error) => {
-                    console.error('Lỗi khi đặt thuê:', error);
-                    toast.error('Lỗi khi đặt thuê. Vui lòng kiểm tra lại.', {
-                        style: { fontSize: '1.5rem' },
+                        },
+                    );
+                    navigate('/borrowSuccess', {
+                        state: {
+                            borrows: borrow?.borrowItemSelected,
+                            borrowDate: borrowData.borrowDate,
+                            returnDate: returnDate.toISOString().split('T')[0], // Gửi returnDate dưới dạng chuỗi
+                            priceTotalMemo: priceTotalMemo,
+                        },
                     });
-                },
-                onSettled: () => {
-                    setIsLoading(false); // Tắt loading sau khi hoàn thành
-                },
+                } else {
+                    toast.error(
+                        data?.message || 'Đặt thuê thất bại. Vui lòng thử lại.',
+                        {
+                            style: { fontSize: '1.5rem' },
+                        },
+                    );
+                }
             },
-        );
+            onError: (error) => {
+                console.error(
+                    'Lỗi khi đặt thuê:',
+                    error.response?.data || error,
+                );
+                toast.error(
+                    error.response?.data?.message ||
+                        'Lỗi khi đặt thuê. Vui lòng kiểm tra lại.',
+                    {
+                        style: { fontSize: '1.5rem' },
+                    },
+                );
+            },
+            onSettled: () => {
+                setIsLoading(false);
+            },
+        });
     };
 
     const mutationAddBorrow = useMutationHook((data) => {
@@ -256,8 +250,6 @@ const BorrowPage = () => {
             >
                 <h1 style={{ marginBottom: '10px' }}>Giỏ sách</h1>
                 <Row gutter={16}>
-                    {/* Phần bên trái: Danh sách sản phẩm */}
-
                     <Col span={19}>
                         <div
                             style={{
@@ -266,19 +258,6 @@ const BorrowPage = () => {
                                 borderRadius: '5px',
                             }}
                         >
-                            {/* <StepsComponent
-                            items={itemDelivery}
-                            current={
-                                priceDeliveryMemo === 20000
-                                    ? 2
-                                    : priceDeliveryMemo === 30000
-                                    ? 1
-                                    : borrow.borrowItemSelected.length === 0
-                                    ? 0
-                                    : 3
-                            }
-                        /> */}
-                            {/* Header */}
                             <Row
                                 style={{
                                     borderBottom: '1px solid #ddd',
@@ -309,7 +288,6 @@ const BorrowPage = () => {
                                 >
                                     Tên sản phẩm
                                 </Col>
-
                                 <Col
                                     span={3}
                                     style={{
@@ -335,23 +313,19 @@ const BorrowPage = () => {
                                     style={{
                                         textAlign: 'center',
                                         fontWeight: 'bold',
-                                        // marginLeft: '75px',
                                     }}
                                 >
                                     Ngày mượn
                                 </Col>
-
                                 <Col
                                     span={3}
                                     style={{
                                         textAlign: 'center',
                                         fontWeight: 'bold',
-                                        // marginLeft: '75px',
                                     }}
                                 >
                                     Ngày trả
                                 </Col>
-
                                 <Button
                                     type="text"
                                     icon={<DeleteOutlined />}
@@ -363,8 +337,19 @@ const BorrowPage = () => {
                                     onClick={handleRemoveAllOrder}
                                 />
                             </Row>
-
-                            {/* Sản phẩm */}
+                            {borrow?.borrowItems?.length === 0 && (
+                                <div
+                                    style={{
+                                        textAlign: 'center',
+                                        padding: '20px',
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        color: '#ff4d4f',
+                                    }}
+                                >
+                                    Chưa có sách nào trong giỏ
+                                </div>
+                            )}
                             {borrow?.borrowItems?.map((order) => {
                                 return (
                                     <Row
@@ -397,7 +382,11 @@ const BorrowPage = () => {
                                             />
                                         </Col>
                                         <Col span={3}>
-                                            <div>{order?.name}</div>
+                                            <div
+                                                style={{ marginLeft: '-20px' }}
+                                            >
+                                                {order?.name}
+                                            </div>
                                         </Col>
                                         <Col span={3}>
                                             <div
@@ -473,7 +462,7 @@ const BorrowPage = () => {
                                         >
                                             {order?.borrowDate
                                                 ? formatDate(order.borrowDate)
-                                                : 'Chưa chọn'}{' '}
+                                                : 'Chưa chọn'}
                                         </Col>
                                         <Col
                                             span={3}
@@ -511,8 +500,6 @@ const BorrowPage = () => {
                             })}
                         </div>
                     </Col>
-
-                    {/* Phần bên phải: Tóm tắt đơn hàng */}
                     <Col span={5}>
                         <div
                             style={{
@@ -528,20 +515,72 @@ const BorrowPage = () => {
                                 <Col>Tạm tính</Col>
                                 <Col>{convertPrice(priceMemo)}</Col>
                             </Row>
-                            <Row
-                                justify="space-between"
-                                style={{ marginBottom: '10px' }}
-                            >
-                                <Col>Ngày mượn</Col>
-                                <Col>{borrowDateRange.start}</Col>
-                            </Row>
-                            <Row
-                                justify="space-between"
-                                style={{ marginBottom: '20px' }}
-                            >
-                                <Col>Ngày trả</Col>
-                                <Col>{borrowDateRange.end}</Col>
-                            </Row>
+                            {borrow?.borrowItemSelected?.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h4>Thời gian mượn</h4>
+                                    {borrow?.borrowItemSelected?.map(
+                                        (item, index) => (
+                                            <div
+                                                key={item.product}
+                                                style={{
+                                                    padding: '10px 0',
+                                                    borderBottom:
+                                                        index <
+                                                        borrow
+                                                            ?.borrowItemSelected
+                                                            ?.length -
+                                                            1
+                                                            ? '1px solid #ddd'
+                                                            : 'none',
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        fontWeight: 'bold',
+                                                        marginBottom: '5px',
+                                                    }}
+                                                >
+                                                    {item.name}
+                                                </div>
+                                                <Row
+                                                    justify="space-between"
+                                                    style={{
+                                                        marginBottom: '5px',
+                                                    }}
+                                                >
+                                                    <Col>Ngày mượn</Col>
+                                                    <Col>
+                                                        {formatDate(
+                                                            item.borrowDate,
+                                                        )}
+                                                    </Col>
+                                                </Row>
+                                                <Row
+                                                    justify="space-between"
+                                                    style={{
+                                                        marginBottom: '5px',
+                                                    }}
+                                                >
+                                                    <Col>Ngày trả</Col>
+                                                    <Col>
+                                                        {formatDate(
+                                                            item.returnDate,
+                                                        )}
+                                                    </Col>
+                                                </Row>
+                                                <Row justify="space-between">
+                                                    <Col>Thời gian mượn</Col>
+                                                    <Col>
+                                                        {item.borrowDuration ||
+                                                            1}{' '}
+                                                        ngày
+                                                    </Col>
+                                                </Row>
+                                            </div>
+                                        ),
+                                    )}
+                                </div>
+                            )}
                             <Row
                                 justify="space-between"
                                 style={{

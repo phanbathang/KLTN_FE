@@ -1,130 +1,150 @@
-import { Row, Col, Form } from 'antd';
+import { Row, Col } from 'antd';
 import { useSelector } from 'react-redux';
-import styles from './BorrowSuccessPage.module.scss';
+import styles from './BorrowSuccessPage.module.scss'; // Use OrderSuccessPage styles
 import { useLocation } from 'react-router-dom';
-import { orderContent } from '../../content';
 import { convertPrice } from '../../ultils';
-import { useMemo } from 'react';
+import { CheckCircleFilled } from '@ant-design/icons';
+import Loading from '../../components/LoadingComponent/Loading.jsx';
 
 const BorrowSuccessPage = () => {
-    const order = useSelector((state) => state.order);
-    const borrow = useSelector((state) => state.borrow);
     const location = useLocation();
     const { state } = location;
 
+    // Định dạng ngày
+    const formatDate = (date) => {
+        if (!date) return 'Chưa xác định';
+        const d = new Date(date);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+
+    // Kiểm tra nếu state hoặc borrows không tồn tại
+    if (!state || !state.borrows?.length) {
+        return (
+            <div className={styles.Wrapper}>
+                <div className={styles.Container}>
+                    <h1 className={styles.Title}>Lỗi</h1>
+                    <p>Không tìm thấy thông tin thuê sách.</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div
-            style={{
-                backgroundColor: '#f0f0f5',
-                width: '100%',
-                minHeight: '100vh',
-                padding: '20px 130px 20px 130px',
-            }}
-        >
-            <h1 style={{ marginBottom: '20px' }}>Đã thuê thành công!</h1>
-            <Row gutter={16}>
-                {/* Phần bên trái: Danh sách sản phẩm */}
-                <Col style={{ width: '100%' }}>
-                    <div
-                        style={{
-                            backgroundColor: '#fff',
-                            padding: '20px',
-                            borderRadius: '5px',
-                        }}
-                    >
-                        {/* Chọn phương thức giao hàng */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ marginBottom: '10px' }}>
-                                Thông tin thuê sách
-                            </h3>
-                            <div
-                                style={{
-                                    padding: '20px',
-                                    backgroundColor: '#f0f8ff',
-                                }}
-                            >
-                                <p>
-                                    <strong>Ngày mượn:</strong>{' '}
-                                    <span
-                                        style={{
-                                            color: '#ea8500',
-                                            fontWeight: 'bold',
-                                        }}
+        <Loading isLoading={false}>
+            <div className={styles.Wrapper}>
+                <div className={styles.Container}>
+                    <h1 className={styles.Title}>
+                        <CheckCircleFilled
+                            style={{
+                                color: '#52c41a',
+                                fontSize: '40px',
+                                marginRight: '10px',
+                                verticalAlign: 'middle',
+                                marginBottom: '10px',
+                            }}
+                        />
+                        Đã thuê thành công!
+                    </h1>
+                    <Row gutter={24}>
+                        <Col style={{ width: '100%' }}>
+                            <div>
+                                {state.borrows.map((borrow) => (
+                                    <Row
+                                        key={borrow?.image}
+                                        className={styles.WrapperRow}
                                     >
-                                        {state.borrowDateRange.start}
-                                    </span>
-                                </p>
-                                <p>
-                                    <strong>Ngày trả:</strong>{' '}
-                                    <span
-                                        style={{
-                                            color: '#ea8500',
-                                            fontWeight: 'bold',
-                                        }}
-                                    >
-                                        {state.borrowDateRange.end}
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-
-                        {state.borrows?.map((borrow) => {
-                            return (
-                                <Row
-                                    key={borrow?.image}
-                                    className={styles.WrapperRow}
-                                >
-                                    <Col span={4}>
-                                        <img
-                                            src={borrow?.image}
-                                            alt="Sản phẩm"
-                                            style={{
-                                                width: '80px',
-                                                height: '80px',
-                                                objectFit: 'cover',
-                                            }}
-                                        />
-                                    </Col>
-                                    <Col span={5}>
-                                        <div>{borrow?.name}</div>
-                                    </Col>
-                                    <Col span={4}>
-                                        <div>
-                                            Giá tiền:{' '}
-                                            {convertPrice(borrow?.price)}
-                                        </div>
-                                    </Col>
-
-                                    <Col
-                                        span={4}
-                                        style={{
-                                            textAlign: 'center',
-                                        }}
-                                    >
-                                        <div>Số lượng: {borrow?.amount} </div>
-                                    </Col>
-                                    <Col
-                                        span={7}
-                                        style={{
-                                            textAlign: 'center',
-                                            color: '#ff4d4f',
-                                        }}
-                                    >
-                                        Tổng:{' '}
+                                        <Col span={3}>
+                                            <img
+                                                src={borrow?.image}
+                                                alt="Sản phẩm"
+                                                className={styles.ProductImage}
+                                            />
+                                        </Col>
+                                        <Col span={5}>
+                                            <div className={styles.ProductName}>
+                                                {borrow?.name}
+                                            </div>
+                                        </Col>
+                                        <Col span={4}>
+                                            <div className={styles.Price}>
+                                                Giá tiền:{' '}
+                                                <span
+                                                    className={
+                                                        styles.PriceValue
+                                                    }
+                                                >
+                                                    {convertPrice(
+                                                        borrow?.price,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </Col>
+                                        <Col
+                                            span={3}
+                                            style={{ textAlign: 'center' }}
+                                        >
+                                            <div className={styles.Amount}>
+                                                Số lượng:{' '}
+                                                <span
+                                                    className={
+                                                        styles.AmountValue
+                                                    }
+                                                >
+                                                    {borrow?.amount}
+                                                </span>
+                                            </div>
+                                        </Col>
+                                        <Col
+                                            span={44}
+                                            style={{ textAlign: 'center' }}
+                                        >
+                                            <div className={styles.Date}>
+                                                Ngày mượn:{' '}
+                                                <span
+                                                    style={{ color: '#ea8500' }}
+                                                >
+                                                    {formatDate(
+                                                        borrow?.borrowDate ||
+                                                            state.borrowDate,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </Col>
+                                        <Col
+                                            span={4}
+                                            style={{ textAlign: 'center' }}
+                                        >
+                                            <div className={styles.Date}>
+                                                Ngày trả:{' '}
+                                                <span
+                                                    style={{ color: '#ea8500' }}
+                                                >
+                                                    {formatDate(
+                                                        borrow?.returnDate ||
+                                                            state.returnDate,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                ))}
+                                <div className={styles.WrapperTotal}>
+                                    Tổng tiền:{' '}
+                                    <span className={styles.TotalValue}>
                                         {convertPrice(
-                                            borrow?.price * borrow?.amount,
+                                            state?.priceTotalMemo || 0,
                                         )}
-                                    </Col>
-                                </Row>
-                            );
-                        })}
-                    </div>
-                    <div className={styles.WrapperTotal}>
-                        Tổng tiền: {convertPrice(state?.priceTotalMemo)}
-                    </div>
-                </Col>
-            </Row>
-        </div>
+                                    </span>
+                                </div>
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+            </div>
+        </Loading>
     );
 };
 
